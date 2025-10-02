@@ -52,6 +52,8 @@
   "vars": {
     "TEMPLATES_REPOSITORY": "https://github.com/cloudflare/ai-vibez",
     "ALLOWED_EMAIL": "cartermoyer75@gmail.com",
+    "ENABLE_EMAIL_WHITELIST": "false",
+    "DISABLE_EMAIL_AUTH": "false",
     "CLOUDFLARE_AI_GATEWAY": "ai-vibez-gateway",
     "CUSTOM_DOMAIN": "ai-vibez.com",
     "MAX_SANDBOX_INSTANCES": "10",

@@ -44,10 +44,11 @@ export class AuthController extends BaseController {
      */
     static async register(request: Request, env: Env, _ctx: ExecutionContext, _routeContext: RouteContext): Promise<Response> {
         try {
-            // Check if OAuth providers are configured - if yes, block email/password registration
-            if (AuthController.hasOAuthProviders(env)) {
+            // Allow both OAuth and email/password registration to coexist
+            // Only block if explicitly disabled via environment variable
+            if (env.DISABLE_EMAIL_AUTH === 'true') {
                 return AuthController.createErrorResponse(
-                    'Email/password registration is not available when OAuth providers are configured. Please use OAuth login instead.',
+                    'Email/password registration is disabled. Please use OAuth login instead.',
                     403
                 );
             }
@@ -59,7 +60,8 @@ export class AuthController extends BaseController {
 
             const validatedData = registerSchema.parse(bodyResult.data);
 
-            if (env.ALLOWED_EMAIL && validatedData.email !== env.ALLOWED_EMAIL) {
+            // Only enforce email whitelisting if explicitly enabled and email provided
+            if (env.ALLOWED_EMAIL && env.ENABLE_EMAIL_WHITELIST === 'true' && validatedData.email !== env.ALLOWED_EMAIL) {
                 return AuthController.createErrorResponse(
                     'Email Whitelisting is enabled. Please use the allowed email to register.',
                     403
@@ -99,10 +101,11 @@ export class AuthController extends BaseController {
      */
     static async login(request: Request, env: Env, _ctx: ExecutionContext, _routeContext: RouteContext): Promise<Response> {
         try {
-            // Check if OAuth providers are configured - if yes, block email/password login
-            if (AuthController.hasOAuthProviders(env)) {
+            // Allow both OAuth and email/password login to coexist
+            // Only block if explicitly disabled via environment variable
+            if (env.DISABLE_EMAIL_AUTH === 'true') {
                 return AuthController.createErrorResponse(
-                    'Email/password login is not available when OAuth providers are configured. Please use OAuth login instead.',
+                    'Email/password login is disabled. Please use OAuth login instead.',
                     403
                 );
             }
@@ -114,7 +117,8 @@ export class AuthController extends BaseController {
 
             const validatedData = loginSchema.parse(bodyResult.data);
 
-            if (env.ALLOWED_EMAIL && validatedData.email !== env.ALLOWED_EMAIL) {
+            // Only enforce email whitelisting if explicitly enabled and email provided
+            if (env.ALLOWED_EMAIL && env.ENABLE_EMAIL_WHITELIST === 'true' && validatedData.email !== env.ALLOWED_EMAIL) {
                 return AuthController.createErrorResponse(
                     'Email Whitelisting is enabled. Please use the allowed email to login.',
                     403
@@ -647,7 +651,7 @@ export class AuthController extends BaseController {
             const providers = {
                 google: !!env.GOOGLE_CLIENT_ID && !!env.GOOGLE_CLIENT_SECRET,
                 github: !!env.GITHUB_CLIENT_ID && !!env.GITHUB_CLIENT_SECRET,
-                email: true
+                email: env.DISABLE_EMAIL_AUTH !== 'true'
             };
             
             // Include CSRF token with provider info
