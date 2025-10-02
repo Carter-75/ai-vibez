@@ -156,6 +156,5 @@
 	"prettier": {
 		"singleQuote": true,
 		"useTabs": true
-	},
-
+	}
 }
