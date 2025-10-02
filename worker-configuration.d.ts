@@ -13,12 +13,46 @@ declare namespace Cloudflare {
 		MAX_SANDBOX_INSTANCES: "10";
 		SANDBOX_INSTANCE_TYPE: "standard";
 		CUSTOM_DOMAIN: string;
+		CUSTOM_PREVIEW_DOMAIN: string;
 		ENVIRONMENT: string;
 		ENABLE_EMAIL_WHITELIST: string;
 		DISABLE_EMAIL_AUTH: string;
+		ALLOCATION_STRATEGY: string;
+		// API Keys
+		ANTHROPIC_API_KEY: string;
+		OPENAI_API_KEY: string;
 		GOOGLE_AI_STUDIO_API_KEY: string;
+		OPENROUTER_API_KEY: string;
+		CEREBRAS_API_KEY: string;
+		GROQ_API_KEY: string;
+		SERPAPI_KEY: string;
+		// Cloudflare API
+		CLOUDFLARE_API_TOKEN: string;
+		CLOUDFLARE_ACCOUNT_ID: string;
+		CLOUDFLARE_AI_GATEWAY_URL: string;
+		CLOUDFLARE_AI_GATEWAY_TOKEN: string;
+		// OAuth Providers
+		GOOGLE_CLIENT_ID: string;
+		GOOGLE_CLIENT_SECRET: string;
+		GITHUB_CLIENT_ID: string;
+		GITHUB_CLIENT_SECRET: string;
+		GITHUB_EXPORTER_CLIENT_ID: string;
+		GITHUB_EXPORTER_CLIENT_SECRET: string;
+		// Security & Secrets
 		JWT_SECRET: string;
 		WEBHOOK_SECRET: string;
+		ENTROPY_KEY: string;
+		SECRETS_ENCRYPTION_KEY: string;
+		// Sandbox Service
+		SANDBOX_SERVICE_API_KEY: string;
+		SANDBOX_SERVICE_TYPE: string;
+		SANDBOX_SERVICE_URL: string;
+		// Sentry & Monitoring
+		SENTRY_DSN: string;
+		CF_ACCESS_ID: string;
+		CF_ACCESS_SECRET: string;
+		// Dispatcher
+		DISPATCHER: DispatchNamespace;
 		CodeGenObject: DurableObjectNamespace<import("./worker/index").CodeGeneratorAgent>;
 		Sandbox: DurableObjectNamespace<import("./worker/index").UserAppSandboxService>;
 		DORateLimitStore: DurableObjectNamespace<import("./worker/index").DORateLimitStore>;
