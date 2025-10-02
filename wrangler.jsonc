@@ -2,151 +2,109 @@
  * For more details on how to configure Wrangler, refer to:
  * https://developers.cloudflare.com/workers/wrangler/configuration/
  */
- {
-	// "$schema": "node_modules/wrangler/config-schema.json",
-	"name": "ai-vibez",
-	"main": "worker/index.ts",
-	"compatibility_date": "2025-08-10",
-	"compatibility_flags": ["nodejs_compat"],
-    "version_metadata": {
-        "binding": "CF_VERSION_METADATA"
-    },
-	"assets": {
-		"directory": "dist",
-		"not_found_handling": "single-page-application",
-		// "run_worker_first": ["!/src/*", "!/api/docs/*"],
-        "run_worker_first": true,
-        "binding": "ASSETS"
-	},
-	"observability": {
-		"enabled": true,
-        "head_sampling_rate": 1
-	},
+{
+  // "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "ai-vibez",
+  "main": "worker/index.ts",
+  "compatibility_date": "2025-08-10",
+  "compatibility_flags": ["nodejs_compat"],
+
+  "version_metadata": { "binding": "CF_VERSION_METADATA" },
+
+  "assets": {
+    // your client build output
+    "directory": "dist/client",
+    "not_found_handling": "single-page-application",
+    "run_worker_first": true,
+    "binding": "ASSETS"
+  },
+
+  "observability": {
+    "enabled": true,
+    "head_sampling_rate": 1
+  },
+
   "unsafe": {
     "bindings": [
-        {
-            "name": "API_RATE_LIMITER",
-            "type": "ratelimit",
-            "namespace_id": "2101",
-            "simple": { "limit": 10000, "period": 60 }
-        },
-        {
-            "name": "AUTH_RATE_LIMITER",
-            "type": "ratelimit",
-            "namespace_id": "2102",
-            "simple": { "limit": 1000, "period": 60 }
-        }
+      {
+        "name": "API_RATE_LIMITER",
+        "type": "ratelimit",
+        "namespace_id": "2101",
+        "simple": { "limit": 10000, "period": 60 }
+      },
+      {
+        "name": "AUTH_RATE_LIMITER",
+        "type": "ratelimit",
+        "namespace_id": "2102",
+        "simple": { "limit": 1000, "period": 60 }
+      }
     ]
   },
-	/**
-	 * Bindings
-	 * Bindings allow your Worker to interact with resources on the Cloudflare Developer Platform, including
-	 * databases, object storage, AI inference, real-time communication and more.
-	 * https://developers.cloudflare.com/workers/runtime-apis/bindings/
-	 */
-	"ai": {
-		"binding": "AI",
-        "remote": true
-	},
-	"images": {
-		"binding": "IMAGES"
-	},
-    "dispatch_namespaces": [
-        {
-            "binding": "DISPATCHER",
-            "namespace": "vibesdk-default-namespace",
-            "remote": true
-        }
-    ],
-	"containers": [
-		{
-			"class_name": "UserAppSandboxService",
-			"image": "./SandboxDockerfile",
-            // Altering max_instances value will have no effect. Please use the MAX_SANDBOX_INSTANCES var instead.
-			"max_instances": 2900,
-            // ATTENTION: Altering instance_type value will have no effect. Please use the SANDBOX_INSTANCE_TYPE var instead.
-            "instance_type": {
-                "vcpu": 4,
-                "memory_mib": 4096,
-                "disk_mb": 10240
-            },
-            "rollout_step_percentage": 100
-		}
-	],
-	"d1_databases": [
-		{
-			"binding": "DB",
-			"database_name": "ai-vibez.d1",
-			"database_id": "23af99f4-3364-4af5-a3e0-3d5754de84b1",
-			"migrations_dir": "migrations",
-			"remote": true
-		}
-	],
-	"durable_objects": {
-		"bindings": [
-			{
-				"class_name": "CodeGeneratorAgent",
-				"name": "CodeGenObject"
-			},
-            {
-                "class_name": "UserAppSandboxService",
-                "name": "Sandbox"
-            },
-            {
-                "class_name": "DORateLimitStore",
-                "name": "DORateLimitStore"
-            }
-		]
-	},
-    "r2_buckets": [
-      {
-        "binding": "TEMPLATES_BUCKET",
-        "bucket_name": "ai-vibez-r2",
-        "remote": true
-      }
-    ],
-    "kv_namespaces": [
-        {
-            "binding": "VibecoderStore",
-            "id": "d378753f952547908384f7c69fc35779",
-            "remote": true
-        }
-    ],
-	"migrations": [
-		{
-			"new_sqlite_classes": [
-				"CodeGeneratorAgent",
-				"UserAppSandboxService"
-			],
-			"tag": "v1"
-		},
-        {
-            "new_sqlite_classes": [
-                "DORateLimitStore"
-            ],
-            "tag": "v2"
-        }
-	],
-	"routes": [
-        {
-            "pattern": "build.cloudflare.dev",
-            "custom_domain": true
-        },
-        {
-            "pattern": "*build-preview.cloudflare.dev/*",
-            "custom_domain": false,
-            "zone_id": "db01fac4261b2604aacad8410443a3e2"
-        }
-    ],
-	"vars": {
-        "TEMPLATES_REPOSITORY": "https://github.com/cloudflare/ai-vibez",
-        "ALLOWED_EMAIL": "cartermoyer75@gmail.com",
-        "DISPATCH_NAMESPACE": "ai-vibez-namespace",
-        "CLOUDFLARE_AI_GATEWAY": "ai-vibez-gateway",
-        "CUSTOM_DOMAIN": "ai-vibez.com",
-        "MAX_SANDBOX_INSTANCES": "10",
-        "SANDBOX_INSTANCE_TYPE": "standard"
-    },
-	"workers_dev": false,
-	"preview_urls": false
+
+  "ai": { "binding": "AI", "remote": true },
+  "images": { "binding": "IMAGES" },
+
+  // Removed dispatch_namespaces (no Workers for Platforms)
+  // "dispatch_namespaces": [ ... ]  <-- deleted
+
+  "containers": [
+    {
+      "class_name": "UserAppSandboxService",
+      "image": "./SandboxDockerfile",
+      // max_instances/instance_type are controlled by vars below
+      "max_instances": 2900,
+      "instance_type": { "vcpu": 4, "memory_mib": 4096, "disk_mb": 10240 },
+      "rollout_step_percentage": 100
+    }
+  ],
+
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "ai-vibez.d1",
+      "database_id": "23af99f4-3364-4af5-a3e0-3d5754de84b1",
+      "migrations_dir": "migrations",
+      "remote": true
+    }
+  ],
+
+  "durable_objects": {
+    "bindings": [
+      { "class_name": "CodeGeneratorAgent", "name": "CodeGenObject" },
+      { "class_name": "UserAppSandboxService", "name": "Sandbox" },
+      { "class_name": "DORateLimitStore", "name": "DORateLimitStore" }
+    ]
+  },
+
+  "r2_buckets": [
+    { "binding": "TEMPLATES_BUCKET", "bucket_name": "ai-vibez-r2", "remote": true }
+  ],
+
+  "kv_namespaces": [
+    { "binding": "VibecoderStore", "id": "d378753f952547908384f7c69fc35779", "remote": true }
+  ],
+
+  "migrations": [
+    { "new_sqlite_classes": ["CodeGeneratorAgent", "UserAppSandboxService"], "tag": "v1" },
+    { "new_sqlite_classes": ["DORateLimitStore"], "tag": "v2" }
+  ],
+
+  "routes": [
+    // This attaches the Worker to your custom domain
+    { "pattern": "ai-vibez.com", "custom_domain": true }
+  ],
+
+  "vars": {
+    "TEMPLATES_REPOSITORY": "https://github.com/cloudflare/ai-vibez",
+    "ALLOWED_EMAIL": "cartermoyer75@gmail.com",
+    // Removed DISPATCH_NAMESPACE
+    "CLOUDFLARE_AI_GATEWAY": "ai-vibez-gateway",
+    "CUSTOM_DOMAIN": "ai-vibez.com",
+    "MAX_SANDBOX_INSTANCES": "10",
+    "SANDBOX_INSTANCE_TYPE": "standard"
+  },
+
+  // Only custom domain (no workers.dev preview URL). Set to true if you want both.
+  "workers_dev": false,
+  "preview_urls": false
 }
