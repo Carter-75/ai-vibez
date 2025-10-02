@@ -47,12 +47,40 @@ function getAllowedOrigins(env: Env): string[] {
         origins.push(`https://${env.CUSTOM_DOMAIN}`);
     }
     
+    // Allow carter-portfolio.fyi for iframe embedding
+    origins.push('https://carter-portfolio.fyi');
+    origins.push('https://www.carter-portfolio.fyi');
+    
     // Development origins (only in development)
     if (env.ENVIRONMENT === 'dev') {
         origins.push('http://localhost:3000');
         origins.push('http://localhost:5173');
         origins.push('http://127.0.0.1:3000');
         origins.push('http://127.0.0.1:5173');
+        // Add local development for portfolio site
+        origins.push('http://localhost:4000');
+        origins.push('http://localhost:8080');
+    }
+    
+    return origins;
+}
+
+/**
+ * Get allowed iframe parent origins for X-Frame-Options and CSP frame-ancestors
+ */
+function getIframeAllowedOrigins(env: Env): string[] {
+    const origins: string[] = [];
+    
+    // Allow carter-portfolio.fyi to embed this app in iframes
+    origins.push('https://carter-portfolio.fyi');
+    origins.push('https://www.carter-portfolio.fyi');
+    
+    // Development origins (only in development)
+    if (env.ENVIRONMENT === 'dev') {
+        origins.push('http://localhost:4000');
+        origins.push('http://localhost:8080');
+        origins.push('http://127.0.0.1:4000');
+        origins.push('http://127.0.0.1:8080');
     }
     
     return origins;
@@ -194,7 +222,7 @@ export function getSecureHeadersConfig(env: Env): SecureHeadersConfig {
             mediaSrc: ["'self'"],
             workerSrc: ["'self'", "blob:"],
             formAction: ["'self'"],
-            frameAncestors: ["'none'"],
+            frameAncestors: ["'self'", ...getIframeAllowedOrigins(env)],
             baseUri: ["'self'"],
             manifestSrc: ["'self'"],
             upgradeInsecureRequests: !isDevelopment ? [] : undefined
@@ -205,8 +233,8 @@ export function getSecureHeadersConfig(env: Env): SecureHeadersConfig {
             ? undefined // Don't set in development
             : 'max-age=31536000; includeSubDomains; preload',
         
-        // X-Frame-Options - Prevent clickjacking
-        xFrameOptions: 'DENY',
+        // X-Frame-Options - Allow embedding on specific domains
+        xFrameOptions: 'SAMEORIGIN', // Will be overridden by CSP frame-ancestors
         
         // X-Content-Type-Options - Prevent MIME sniffing
         xContentTypeOptions: 'nosniff',
