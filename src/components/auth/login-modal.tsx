@@ -115,15 +115,19 @@ export function LoginModal({
 			errors.email = 'Invalid email format';
 		}
 
-		// Enhanced password validation to match backend
+		// Strict password validation to match backend
 		if (!password) {
 			errors.password = 'Password is required';
 		} else if (mode === 'register') {
-			// Only apply strict validation for registration
-			if (password.length < 6) {
-				errors.password = 'Password must be at least 6 characters';
-			} else if (!/(?=.*[a-zA-Z])(?=.*[0-9])/.test(password)) {
-				errors.password = 'Password must contain at least one letter and one number';
+			// Apply strict validation for registration
+			if (password.length < 8) {
+				errors.password = 'Password must be at least 8 characters';
+			} else if (!/[a-z]/.test(password)) {
+				errors.password = 'Password must contain at least one lowercase letter';
+			} else if (!/[A-Z]/.test(password)) {
+				errors.password = 'Password must contain at least one uppercase letter';
+			} else if (!/[0-9]/.test(password)) {
+				errors.password = 'Password must contain at least one number';
 			}
 		}
 
