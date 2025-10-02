@@ -1,7 +1,7 @@
+@import "tw-animate-css";
 @tailwind base;
 @tailwind components; 
 @tailwind utilities;
-@import "tw-animate-css";
 
 @font-face{
   font-family: "departureMono";

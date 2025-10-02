@@ -1,2 +1,7 @@
 // Cloudflare Pages Functions middleware
-// This file will be built and replaced during the build process
+// Basic middleware for Pages Functions
+
+export async function onRequest(context: any) {
+  // Continue to next handler
+  return context.next();
+}
