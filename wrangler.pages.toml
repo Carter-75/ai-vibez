@@ -14,5 +14,50 @@ root_dir = "."
 [build.environment_variables]
 NODE_VERSION = "18"
 
-# No deployment configuration needed for GitHub integration
-# Pages will automatically deploy the built assets including _worker.js
+# Environment variables for Pages Functions
+[vars]
+TEMPLATES_REPOSITORY = "https://github.com/cloudflare/ai-vibez"
+ALLOWED_EMAIL = "cartermoyer75@gmail.com"
+ENABLE_EMAIL_WHITELIST = "false"
+DISABLE_EMAIL_AUTH = "false"
+CLOUDFLARE_AI_GATEWAY = "ai-vibez-gateway"
+CUSTOM_DOMAIN = "ai-vibez.com"
+MAX_SANDBOX_INSTANCES = "10"
+SANDBOX_INSTANCE_TYPE = "standard"
+
+# D1 Database binding
+[[d1_databases]]
+binding = "DB"
+database_name = "ai-vibez.d1"
+database_id = "23af99f4-3364-4af5-a3e0-3d5754de84b1"
+
+# KV Storage binding
+[[kv_namespaces]]
+binding = "VibecoderStore"
+id = "d378753f952547908384f7c69fc35779"
+
+# R2 Storage binding
+[[r2_buckets]]
+binding = "TEMPLATES_BUCKET"
+bucket_name = "ai-vibez-r2"
+
+# Durable Objects bindings
+[[durable_objects.bindings]]
+name = "CodeGenObject"
+class_name = "CodeGeneratorAgent"
+
+[[durable_objects.bindings]]
+name = "Sandbox"
+class_name = "UserAppSandboxService"
+
+[[durable_objects.bindings]]
+name = "DORateLimitStore"
+class_name = "DORateLimitStore"
+
+# AI binding
+[ai]
+binding = "AI"
+
+# Images binding
+[images]
+binding = "IMAGES"
