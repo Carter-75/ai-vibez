@@ -70,6 +70,9 @@ export function LoginModal({
 	const [validationErrors, setValidationErrors] = useState<
 		Record<string, string>
 	>({});
+	
+	// Track if user has tried to submit (to show validation hints)
+	const [hasAttemptedSubmit, setHasAttemptedSubmit] = useState(false);
 
 	// Determine if enhanced features are available
 	const hasEmailAuth = requiresEmailAuth && !!onEmailLogin;
@@ -84,6 +87,7 @@ export function LoginModal({
 		setConfirmPassword('');
 		setValidationErrors({});
 		setShowPassword(false);
+		setHasAttemptedSubmit(false);
 		if (onClearError) onClearError();
 	};
 
@@ -96,6 +100,7 @@ export function LoginModal({
 		setMode(newMode);
 		resetForm();
 		setValidationErrors({});
+		setHasAttemptedSubmit(false);
 		if (onClearError) onClearError();
 	};
 
@@ -143,6 +148,7 @@ export function LoginModal({
 
 	const handleSubmit = async (e: React.FormEvent) => {
 		e.preventDefault();
+		setHasAttemptedSubmit(true);
 
 		if (!validateForm()) return;
 
@@ -363,8 +369,17 @@ export function LoginModal({
 												)}
 												disabled={isLoading}
 											/>
-											{validationErrors.email && (
-												<p className="mt-1 text-sm text-destructive">{validationErrors.email}</p>
+											{validationErrors.email && hasAttemptedSubmit && (
+												<motion.div
+													initial={{ opacity: 0, y: -10 }}
+													animate={{ opacity: 1, y: 0 }}
+													className="mt-2 p-2 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg"
+												>
+													<p className="text-xs text-red-600 dark:text-red-400 flex items-center gap-1">
+														<span className="text-red-500">⚠️</span>
+														{validationErrors.email}
+													</p>
+												</motion.div>
 											)}
 										</div>
 
@@ -388,8 +403,17 @@ export function LoginModal({
 											>
 												{showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
 											</button>
-											{validationErrors.password && (
-												<p className="mt-1 text-sm text-destructive">{validationErrors.password}</p>
+											{validationErrors.password && hasAttemptedSubmit && (
+												<motion.div
+													initial={{ opacity: 0, y: -10 }}
+													animate={{ opacity: 1, y: 0 }}
+													className="mt-2 p-2 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg"
+												>
+													<p className="text-xs text-red-600 dark:text-red-400 flex items-center gap-1">
+														<span className="text-red-500">⚠️</span>
+														{validationErrors.password}
+													</p>
+												</motion.div>
 											)}
 										</div>
 
