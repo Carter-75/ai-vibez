@@ -146,7 +146,7 @@
 		"tailwindcss": "^4.1.13",
 		"ts-jest": "^29.4.1",
 		"tsx": "^4.20.5",
-		"tw-animate-css": "^1.3.8",
+
 		"typescript": "^5.9.2",
 		"typescript-eslint": "^8.42.0",
 		"vite": "^6.0.1",
