@@ -7,7 +7,7 @@
 		"dev": "DEV_MODE=true vite",
 		"dev:worker": "DEV_MODE=true npm run build && wrangler dev --x-remote-bindings --port 5173",
 		"dev:remote": "DEV_MODE=true npm run build && wrangler dev --remote --port 5173",
-		"build": "NODE_OPTIONS='--max-old-space-size=4096' tsc -b && vite build && mkdir -p dist/ai_vibez && cp wrangler.json dist/ai_vibez/wrangler.json && cp -r worker dist/ai_vibez/",
+		"build": "NODE_OPTIONS='--max-old-space-size=4096' tsc -b && vite build && mkdir -p dist/ai_vibez && cp wrangler.json dist/ai_vibez/wrangler.json && cp -r worker dist/ai_vibez/ && cp -r shared dist/ai_vibez/",
 		"build:fast": "NODE_OPTIONS='--max-old-space-size=4096' vite build",
 		"lint": "eslint .",
 		"preview": "npm run build && vite preview",
