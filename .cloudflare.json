@@ -1,7 +1,7 @@
 {
   "pages": {
     "build": {
-      "command": "npm run build",
+      "command": "bun run build",
       "output_dir": "dist",
       "root_dir": ".",
       "env": {

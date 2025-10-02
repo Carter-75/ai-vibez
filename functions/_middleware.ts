@@ -1,2 +1,2 @@
 // Cloudflare Pages Functions middleware
-export { default } from '../dist/_worker.js';
+// This file will be built and replaced during the build process
