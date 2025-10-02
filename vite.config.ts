@@ -8,6 +8,7 @@ import path from 'path';
 // import { cloudflare } from '@cloudflare/vite-plugin';
 // import tailwindcss from '@tailwindcss/vite';
 // import { nodePolyfills } from 'vite-plugin-node-polyfills';
+// import monacoEditorPlugin from 'vite-plugin-monaco-editor';
 
 // https://vite.dev/config/
 export default defineConfig({
@@ -29,6 +30,7 @@ export default defineConfig({
 	plugins: [
 		react(),
 		svgr(),
+		// monacoEditorPlugin({}),
 		// Temporarily disable Cloudflare and TailwindCSS plugins due to ESM compatibility issues
 		// cloudflare({
 		//	configPath: 'wrangler.jsonc',
@@ -78,5 +80,14 @@ export default defineConfig({
 
 	build: {
 		sourcemap: true,
+		rollupOptions: {
+			external: (id) => {
+				// Externalize monaco-editor workers 
+				if (id.includes('monaco-editor') && id.includes('worker')) {
+					return false; // Let vite handle these
+				}
+				return false;
+			}
+		},
 	},
 });

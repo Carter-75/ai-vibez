@@ -8,7 +8,7 @@ import {
 } from 'react';
 import { ArrowRight } from 'react-feather';
 import { useParams, useSearchParams, useNavigate } from 'react-router';
-import { MonacoEditor } from '../../components/monaco-editor/monaco-editor';
+// import { MonacoEditor } from '../../components/monaco-editor/monaco-editor';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Expand, Github, LoaderCircle, RefreshCw } from 'lucide-react';
 import { Blueprint } from './components/blueprint';
@@ -950,40 +950,11 @@ export default function Chat() {
 												onFileClick={handleFileClick}
 											/>
 											<div className="flex-1">
-												<MonacoEditor
-													className="h-full"
-													createOptions={{
-														value:
-															activeFile?.fileContents ||
-															'',
-														language:
-															activeFile?.language ||
-															'plaintext',
-														readOnly: true,
-														minimap: {
-															enabled: false,
-														},
-														lineNumbers: 'on',
-														scrollBeyondLastLine: false,
-														fontSize: 13,
-														theme: 'v1-dev',
-														automaticLayout: true,
-													}}
-													find={
-														edit &&
-														edit.filePath ===
-															activeFile?.filePath
-															? edit.search
-															: undefined
-													}
-													replace={
-														edit &&
-														edit.filePath ===
-															activeFile?.filePath
-															? edit.replacement
-															: undefined
-													}
-												/>
+												<div className="h-full p-4 bg-gray-100 overflow-auto">
+													<pre className="text-sm whitespace-pre-wrap">
+														{activeFile?.fileContents || ''}
+													</pre>
+												</div>
 											</div>
 										</div>
 									</div>

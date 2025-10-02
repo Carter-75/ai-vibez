@@ -23,7 +23,7 @@ import {
 	Trash2,
 	Github,
 } from 'lucide-react';
-import { MonacoEditor } from '@/components/monaco-editor/monaco-editor';
+// import { MonacoEditor } from '@/components/monaco-editor/monaco-editor';
 import { getFileType } from '@/utils/string';
 import { SmartPreviewIframe } from '@/routes/chat/components/smart-preview-iframe';
 import { Button } from '@/components/ui/button';
@@ -955,25 +955,11 @@ export default function AppView() {
 														</div>
 
 														<div className="flex-1 min-h-0">
-															<MonacoEditor
-																className="h-full"
-																createOptions={{
-																	value: activeFile.fileContents,
-																	language:
-																		activeFile.language ||
-																		'plaintext',
-																	readOnly: true,
-																	minimap: {
-																		enabled: false,
-																	},
-																	lineNumbers:
-																		'on',
-																	scrollBeyondLastLine: false,
-																	fontSize: 13,
-																	theme: 'v1-dev',
-																	automaticLayout: true,
-																}}
-															/>
+															<div className="h-full p-4 bg-gray-100 overflow-auto">
+																<pre className="text-sm whitespace-pre-wrap">
+																	{activeFile.fileContents}
+																</pre>
+															</div>
 														</div>
 													</>
 												) : (
