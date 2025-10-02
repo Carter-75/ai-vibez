@@ -1,7 +1,7 @@
 {
   "pages": {
     "build": {
-      "command": "bun run build",
+      "command": "bun run build:fast",
       "output_dir": "dist",
       "root_dir": ".",
       "env": {

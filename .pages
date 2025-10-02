@@ -1,0 +1,14 @@
+# Cloudflare Pages Configuration
+# This file ensures proper Pages deployment without authentication issues
+
+# Build configuration
+build-command = "bun run build:fast"
+build-output-directory = "dist"
+
+# No deploy command - Pages will handle deployment automatically
+# deploy-command = 
+
+# Environment
+node-version = "18"
+compatibility-date = "2024-10-02"
+compatibility-flags = ["nodejs_compat"]

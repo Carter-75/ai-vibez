@@ -1,0 +1,18 @@
+# Cloudflare Pages Configuration
+# This file configures Pages-specific settings
+
+name = "ai-vibez"
+compatibility_date = "2024-10-02"
+compatibility_flags = ["nodejs_compat"]
+
+# Pages build configuration
+[build]
+command = "bun run build:fast"
+destination_dir = "dist"
+root_dir = "."
+
+[build.environment_variables]
+NODE_VERSION = "18"
+
+# No deployment configuration needed for GitHub integration
+# Pages will automatically deploy the built assets
