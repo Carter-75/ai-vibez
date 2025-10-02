@@ -1,24 +1,35 @@
 // Cloudflare Pages Functions API routes
 // This handles all /api/* requests and forwards them to the worker
 
+import { createApp } from '../../worker/app';
+import { createLogger } from '../../worker/logger';
+
+const logger = createLogger('Pages-API');
+
 export async function onRequest(context: any): Promise<Response> {
-  const { request, env } = context;
+  const { request, env, ctx } = context;
   
   try {
-    // Import the worker
-    const workerModule = await import('../../dist/_worker.js');
+    // Log the incoming request for debugging
+    const url = new URL(request.url);
+    logger.info(`Pages API handling request: ${request.method} ${url.pathname}`);
     
-    // Call the worker's default export (which is the fetch handler)
-    if (workerModule.default && typeof workerModule.default.fetch === 'function') {
-      return await workerModule.default.fetch(request, env, context);
-    } else if (typeof workerModule.default === 'function') {
-      return await workerModule.default(request, env, context);
-    }
+    // Create the main Hono application directly
+    const app = createApp(env);
     
-    // If worker module doesn't have the expected structure, return error
-    return new Response('Worker module not properly configured', { status: 500 });
+    // Call the app fetch handler
+    const response = await app.fetch(request, env, ctx);
+    
+    logger.info(`Pages API response status: ${response.status}`);
+    return response;
   } catch (error: any) {
-    console.error('Error loading worker module:', error);
-    return new Response(`Error: ${error.message}`, { status: 500 });
+    logger.error('Error in Pages API handler:', error);
+    console.error('Pages API Error:', error);
+    return new Response(`API Error: ${error.message}`, { 
+      status: 500,
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    });
   }
 }
