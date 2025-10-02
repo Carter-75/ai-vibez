@@ -74,7 +74,7 @@ export function iframeMiddleware(env: Env) {
 /**
  * Middleware specifically for handling iframe API requests
  */
-export function iframeApiMiddleware(env: Env) {
+export function iframeApiMiddleware(_env: Env) {
   return async (c: Context<AppEnv>, next: Next) => {
     const isIframeRequest = c.get('isIframeRequest') || false;
     const isPortfolioEmbed = c.get('isPortfolioEmbed') || false;
