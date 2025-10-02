@@ -4,26 +4,31 @@ import { HTTPException } from 'hono/http-exception';
 import type { AppEnv } from '../types/appenv';
 
 export function sentryOptions(env: Env) : Sentry.CloudflareOptions {
-    let transportOptions : Sentry.CloudflareOptions['transportOptions'] = {};
-    if (env.CF_ACCESS_ID && env.CF_ACCESS_SECRET) {
-        transportOptions.headers = {
-            'CF-Access-Client-Id': env.CF_ACCESS_ID,
-            'CF-Access-Client-Secret': env.CF_ACCESS_SECRET,
-        };
-    }
-	return {
-		dsn: env.SENTRY_DSN,
-		release: env.CF_VERSION_METADATA.id,
-		environment: env.ENVIRONMENT,
-		enableLogs: true,
-		sendDefaultPii: true,
-		tracesSampleRate: 1.0,
-        transportOptions,
+    const options: Sentry.CloudflareOptions = {
+        dsn: env.SENTRY_DSN,
+        release: env.CF_VERSION_METADATA.id,
+        environment: env.ENVIRONMENT,
+        enableLogs: true,
+        sendDefaultPii: true,
+        tracesSampleRate: 1.0,
         allowUrls: [
             // Only capture errors from our API endpoints
             new RegExp(`^https://${env.CUSTOM_DOMAIN.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}/api/.*$`)
         ]
-	};
+    };
+
+    // Add transport options if CF Access credentials are available
+    if (env.CF_ACCESS_ID && env.CF_ACCESS_SECRET) {
+        // @ts-ignore: transportOptions may not be in the interface but is supported
+        options.transportOptions = {
+            headers: {
+                'CF-Access-Client-Id': env.CF_ACCESS_ID,
+                'CF-Access-Client-Secret': env.CF_ACCESS_SECRET,
+            }
+        };
+    }
+
+    return options;
 }
 
 export function initHonoSentry(app: Hono<AppEnv>): void {
@@ -73,7 +78,7 @@ export function captureSecurityEvent(
 ): void {
     try {
         const level: SecuritySeverity = options.level ?? 'warning';
-        Sentry.withScope((scope) => {
+        Sentry.withScope((scope: Sentry.Scope) => {
             scope.setTag('security_event', type);
             scope.setContext('security', data);
             scope.setLevel(level);
