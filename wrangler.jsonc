@@ -1,6 +1,6 @@
 /**
- * For more details on how to configure Wrangler, refer to:
- * https://developers.cloudflare.com/workers/wrangler/configuration/
+ * Wrangler config
+ * Docs: https://developers.cloudflare.com/workers/wrangler/configuration/
  */
 {
   // "$schema": "node_modules/wrangler/config-schema.json",
@@ -12,7 +12,6 @@
   "version_metadata": { "binding": "CF_VERSION_METADATA" },
 
   "assets": {
-    // your client build output
     "directory": "dist/client",
     "not_found_handling": "single-page-application",
     "run_worker_first": true,
@@ -44,19 +43,8 @@
   "ai": { "binding": "AI", "remote": true },
   "images": { "binding": "IMAGES" },
 
-  // Removed dispatch_namespaces (no Workers for Platforms)
-  // "dispatch_namespaces": [ ... ]  <-- deleted
-
-  "containers": [
-    {
-      "class_name": "UserAppSandboxService",
-      "image": "./SandboxDockerfile",
-      // max_instances/instance_type are controlled by vars below
-      "max_instances": 2900,
-      "instance_type": { "vcpu": 4, "memory_mib": 4096, "disk_mb": 10240 },
-      "rollout_step_percentage": 100
-    }
-  ],
+  // Containers removed (this is what was causing the Unauthorized error)
+  // "containers": [ ... ]
 
   "d1_databases": [
     {
@@ -90,21 +78,19 @@
   ],
 
   "routes": [
-    // This attaches the Worker to your custom domain
-    { "pattern": "ai-vibez.com", "custom_domain": true }
+    { "pattern": "ai-vibez.com", "custom_domain": true },
+    { "pattern": "www.ai-vibez.com", "custom_domain": true }
   ],
 
   "vars": {
     "TEMPLATES_REPOSITORY": "https://github.com/cloudflare/ai-vibez",
     "ALLOWED_EMAIL": "cartermoyer75@gmail.com",
-    // Removed DISPATCH_NAMESPACE
     "CLOUDFLARE_AI_GATEWAY": "ai-vibez-gateway",
     "CUSTOM_DOMAIN": "ai-vibez.com",
     "MAX_SANDBOX_INSTANCES": "10",
     "SANDBOX_INSTANCE_TYPE": "standard"
   },
 
-  // Only custom domain (no workers.dev preview URL). Set to true if you want both.
   "workers_dev": false,
   "preview_urls": false
 }
