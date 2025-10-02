@@ -48,6 +48,11 @@ bucket_name = "ai-vibez-r2"
 binding = "VibecoderStore"
 id = "d378753f952547908384f7c69fc35779"
 
+# Static assets binding for serving frontend files
+[assets]
+binding = "ASSETS"
+directory = "dist"
+
 [vars]
 TEMPLATES_REPOSITORY = "https://github.com/cloudflare/ai-vibez"
 ALLOWED_EMAIL = "cartermoyer75@gmail.com"

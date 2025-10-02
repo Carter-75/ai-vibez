@@ -1,7 +1,7 @@
 {
-  "pages": {
+  "worker": {
     "build": {
-      "command": "bun run build",
+      "command": "bun run build && npx wrangler deploy",
       "output_dir": "dist",
       "root_dir": ".",
       "env": {
@@ -11,7 +11,7 @@
     "deployment": {
       "compatibility_date": "2024-10-02",
       "compatibility_flags": ["nodejs_compat"],
-      "deploy_command": "echo 'Deployment handled automatically by Cloudflare Pages'"
+      "deploy_command": "npx wrangler deploy --env production"
     }
   }
 }
