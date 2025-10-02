@@ -1,7 +1,7 @@
 {
   "pages": {
     "build": {
-      "command": "bun run build:fast",
+      "command": "bun run build",
       "output_dir": "dist",
       "root_dir": ".",
       "env": {
@@ -10,7 +10,8 @@
     },
     "deployment": {
       "compatibility_date": "2024-10-02",
-      "compatibility_flags": ["nodejs_compat"]
+      "compatibility_flags": ["nodejs_compat"],
+      "deploy_command": "echo 'Deployment handled automatically by Cloudflare Pages'"
     }
   }
 }

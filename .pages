@@ -1,12 +1,12 @@
 # Cloudflare Pages Configuration
 # This file ensures proper Pages deployment without authentication issues
 
-# Build configuration
-build-command = "bun run build:fast"
+# Build configuration - FULL BUILD for complete AI Vibez functionality
+build-command = "bun run build"
 build-output-directory = "dist"
 
-# No deploy command - Pages will handle deployment automatically
-# deploy-command = 
+# Deploy command override - harmless echo instead of wrangler command
+deploy-command = "echo 'Deployment handled automatically by Cloudflare Pages'"
 
 # Environment
 node-version = "18"
