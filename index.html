@@ -4,8 +4,43 @@
 		<meta charset="UTF-8" />
 		<link rel="icon" href="/favicon.ico" />
 		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-		<title>Build</title>
-		<meta name="description" content="Ship your app from idea to v1!" />
+		<title>AI Vibez - Build apps with AI</title>
+		<meta name="description" content="Ship your app from idea to v1 with AI-powered development!" />
+		
+		<!-- Iframe embedding support -->
+		<meta name="iframe-compatible" content="true" />
+		<meta name="portfolio-embeddable" content="true" />
+		
+		<!-- Open Graph tags for better embedding -->
+		<meta property="og:title" content="AI Vibez - AI-Powered App Builder" />
+		<meta property="og:description" content="Build and deploy applications using natural language with AI assistance" />
+		<meta property="og:type" content="website" />
+		<meta property="og:image" content="/og-image.png" />
+		
+		<!-- Twitter Card tags -->
+		<meta name="twitter:card" content="summary_large_image" />
+		<meta name="twitter:title" content="AI Vibez - AI-Powered App Builder" />
+		<meta name="twitter:description" content="Build and deploy applications using natural language with AI assistance" />
+		<meta name="twitter:image" content="/og-image.png" />
+		
+		<!-- Iframe detection script -->
+		<script>
+			// Detect iframe embedding early
+			window.isInIframe = window.self !== window.top;
+			window.parentOrigin = document.referrer ? new URL(document.referrer).origin : '';
+			
+			// Add iframe class to body immediately for styling
+			if (window.isInIframe) {
+				document.documentElement.classList.add('iframe-mode');
+				
+				// Check for portfolio embedding
+				if (window.parentOrigin.includes('carter-portfolio.fyi') || 
+				    window.parentOrigin.includes('localhost:4000') ||
+				    window.parentOrigin.includes('localhost:8080')) {
+					document.documentElement.classList.add('portfolio-iframe-mode');
+				}
+			}
+		</script>
 	</head>
 	<body>
 		<div id="root"></div>

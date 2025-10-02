@@ -336,3 +336,74 @@ scrollbar-width: none; /* Firefox */
 .no-scrollbar::-webkit-scrollbar {
 display: none; /* Chrome, Safari, Opera */
 }
+
+/* Iframe-specific styles */
+.iframe-mode {
+	/* Remove margins and padding to fit iframe container */
+	@apply m-0 p-0;
+	
+	/* Ensure full height usage within iframe */
+	min-height: 100vh;
+	height: 100%;
+	
+	/* Prevent overflow issues in iframe */
+	overflow-x: hidden;
+}
+
+.iframe-mode body {
+	/* Remove default body margins in iframe */
+	margin: 0 !important;
+	padding: 0 !important;
+	
+	/* Ensure iframe content fills container */
+	min-height: 100vh;
+	height: 100%;
+}
+
+/* Responsive iframe adjustments */
+@media (max-width: 768px) {
+	.iframe-mode {
+		/* Adjust for mobile iframe embedding */
+		font-size: 14px;
+	}
+	
+	.iframe-mode .sidebar {
+		/* Hide or minimize sidebar in small iframe */
+		transform: translateX(-100%);
+		transition: transform 0.3s ease;
+	}
+	
+	.iframe-mode .main-content {
+		/* Full width when sidebar is hidden */
+		margin-left: 0 !important;
+		width: 100% !important;
+	}
+}
+
+/* Portfolio site specific iframe styles */
+.portfolio-iframe-mode {
+	/* Custom styles for carter-portfolio.fyi embedding */
+	@apply iframe-mode;
+	
+	/* Ensure clean borders for portfolio display */
+	border: none;
+	border-radius: 12px;
+	
+	/* Shadow effects for portfolio showcase */
+	box-shadow: 0 20px 40px -12px rgba(0, 0, 0, 0.15);
+}
+
+/* Hide certain elements when in iframe mode */
+.iframe-mode .header-external-links,
+.iframe-mode .footer-links,
+.iframe-mode .auth-modal,
+.iframe-mode .deployment-modal {
+	display: none !important;
+}
+
+/* Adjust header for iframe mode */
+.iframe-mode .app-header {
+	/* Smaller header in iframe */
+	padding: 0.5rem 1rem;
+	min-height: auto;
+}

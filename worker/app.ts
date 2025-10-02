@@ -9,6 +9,7 @@ import { CsrfService } from './services/csrf/CsrfService';
 import { SecurityError, SecurityErrorType } from 'shared/types/errors';
 import { getGlobalConfigurableSettings } from './config';
 import { AuthConfig, setAuthLevel } from './middleware/auth/routeAuth';
+import { iframeMiddleware, iframeApiMiddleware } from './middleware/iframe';
 // import { initHonoSentry } from './observability/sentry';
 
 export function createApp(env: Env): Hono<AppEnv> {
@@ -16,6 +17,9 @@ export function createApp(env: Env): Hono<AppEnv> {
 
     // Observability: Sentry error reporting & context
     // initHonoSentry(app);
+
+    // Apply iframe support middleware first (for all requests)
+    app.use('*', iframeMiddleware());
 
     // Apply global security middlewares (skip for WebSocket upgrades)
     app.use('*', async (c, next) => {
@@ -30,6 +34,9 @@ export function createApp(env: Env): Hono<AppEnv> {
     
     // CORS configuration
     app.use('/api/*', cors(getCORSConfig(env)));
+    
+    // Apply iframe-specific API middleware
+    app.use('/api/*', iframeApiMiddleware());
     
     // CSRF protection using double-submit cookie pattern with proper GET handling
     app.use('*', async (c, next) => {
