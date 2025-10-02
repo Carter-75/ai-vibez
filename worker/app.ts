@@ -19,7 +19,7 @@ export function createApp(env: Env): Hono<AppEnv> {
     // initHonoSentry(app);
 
     // Apply iframe support middleware first (for all requests)
-    app.use('*', iframeMiddleware());
+    app.use('*', iframeMiddleware(env));
 
     // Apply global security middlewares (skip for WebSocket upgrades)
     app.use('*', async (c, next) => {
@@ -36,7 +36,7 @@ export function createApp(env: Env): Hono<AppEnv> {
     app.use('/api/*', cors(getCORSConfig(env)));
     
     // Apply iframe-specific API middleware
-    app.use('/api/*', iframeApiMiddleware());
+    app.use('/api/*', iframeApiMiddleware(env));
     
     // CSRF protection using double-submit cookie pattern with proper GET handling
     app.use('*', async (c, next) => {

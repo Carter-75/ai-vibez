@@ -33,12 +33,11 @@ function isAllowedIframeParent(referrer: string | null, env: Env): boolean {
 /**
  * Middleware to handle iframe-specific headers and functionality
  */
-export function iframeMiddleware() {
+export function iframeMiddleware(env: Env) {
   return async (c: Context<AppEnv>, next: Next) => {
     const request = c.req;
     const referrer = request.header('Referer') || request.header('Referrer');
     const userAgent = request.header('User-Agent') || '';
-    const env = c.env;
     
     // Check if this is an iframe request from an allowed parent
     const isIframeRequest = isAllowedIframeParent(referrer, env);
@@ -76,7 +75,7 @@ export function iframeMiddleware() {
 /**
  * Middleware specifically for handling iframe API requests
  */
-export function iframeApiMiddleware() {
+export function iframeApiMiddleware(env: Env) {
   return async (c: Context<AppEnv>, next: Next) => {
     const isIframeRequest = c.get('isIframeRequest');
     const isPortfolioEmbed = c.get('isPortfolioEmbed');
