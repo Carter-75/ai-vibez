@@ -1,0 +1,67 @@
+name = "ai-vibez"
+main = "dist/_worker.js"
+compatibility_date = "2024-10-02"
+compatibility_flags = ["nodejs_compat"]
+
+[observability]
+enabled = true
+
+[[unsafe.bindings]]
+name = "API_RATE_LIMITER"
+type = "ratelimit"
+namespace_id = "2101"
+
+[[unsafe.bindings]]
+name = "AUTH_RATE_LIMITER" 
+type = "ratelimit"
+namespace_id = "2102"
+
+[ai]
+binding = "AI"
+
+[images]
+binding = "IMAGES"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "ai-vibez.d1"
+database_id = "23af99f4-3364-4af5-a3e0-3d5754de84b1"
+migrations_dir = "migrations"
+
+[[durable_objects.bindings]]
+name = "CodeGenObject"
+class_name = "CodeGeneratorAgent"
+
+[[durable_objects.bindings]]
+name = "Sandbox"
+class_name = "UserAppSandboxService"
+
+[[durable_objects.bindings]]
+name = "DORateLimitStore"
+class_name = "DORateLimitStore"
+
+[[r2_buckets]]
+binding = "TEMPLATES_BUCKET"
+bucket_name = "ai-vibez-r2"
+
+[[kv_namespaces]]
+binding = "VibecoderStore"
+id = "d378753f952547908384f7c69fc35779"
+
+[vars]
+TEMPLATES_REPOSITORY = "https://github.com/cloudflare/ai-vibez"
+ALLOWED_EMAIL = "cartermoyer75@gmail.com"
+ENABLE_EMAIL_WHITELIST = "false"
+DISABLE_EMAIL_AUTH = "false"
+CLOUDFLARE_AI_GATEWAY = "ai-vibez-gateway"
+CUSTOM_DOMAIN = "ai-vibez.com"
+MAX_SANDBOX_INSTANCES = "10"
+SANDBOX_INSTANCE_TYPE = "standard"
+
+[[routes]]
+pattern = "ai-vibez.com/*"
+zone_name = "ai-vibez.com"
+
+[[routes]]
+pattern = "www.ai-vibez.com/*"
+zone_name = "ai-vibez.com"
