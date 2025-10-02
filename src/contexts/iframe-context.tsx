@@ -3,7 +3,7 @@
  * Manages iframe-specific state and configuration throughout the application
  */
 
-import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { getIframeConfig, listenToParentMessages } from '../utils/iframe';
 
 interface IframeConfig {
@@ -18,8 +18,8 @@ interface IframeConfig {
     compactMode: boolean;
   };
   styling: {
-    headerSize: 'compact' | 'normal';
-    sidebarBehavior: 'overlay' | 'normal';
+    headerSize: string;
+    sidebarBehavior: string;
     containerClass: string;
   };
 }
@@ -46,7 +46,7 @@ export function IframeProvider({ children }: IframeProviderProps) {
 
   useEffect(() => {
     // Set up listener for parent messages
-    const unsubscribe = listenToParentMessages((message) => {
+    listenToParentMessages((message) => {
       setParentMessage(message);
       
       // Handle specific message types

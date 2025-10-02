@@ -10,5 +10,9 @@ export type AppEnv = {
         sessionId: string | null;
         config: GlobalConfigurableSettings;
         authLevel: AuthRequirement;
+        // Iframe-specific variables (optional)
+        isIframeRequest?: boolean;
+        isPortfolioEmbed?: boolean;
+        referrer?: string | null;
     }
 }
