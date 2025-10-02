@@ -110,11 +110,16 @@ export function LoginModal({
 			errors.email = 'Invalid email format';
 		}
 
-		// Basic password validation
+		// Enhanced password validation to match backend
 		if (!password) {
 			errors.password = 'Password is required';
-		} else if (password.length < 8) {
-			errors.password = 'Password must be at least 8 characters';
+		} else if (mode === 'register') {
+			// Only apply strict validation for registration
+			if (password.length < 6) {
+				errors.password = 'Password must be at least 6 characters';
+			} else if (!/(?=.*[a-zA-Z])(?=.*[0-9])/.test(password)) {
+				errors.password = 'Password must contain at least one letter and one number';
+			}
 		}
 
 		// Additional validation for registration
