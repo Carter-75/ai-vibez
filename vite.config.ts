@@ -4,8 +4,9 @@ import react from '@vitejs/plugin-react';
 import svgr from 'vite-plugin-svgr';
 import path from 'path';
 
-import { cloudflare } from '@cloudflare/vite-plugin';
-import tailwindcss from '@tailwindcss/vite';
+// ESM import issues with Vite 6.x - using dynamic imports instead
+// import { cloudflare } from '@cloudflare/vite-plugin';
+// import tailwindcss from '@tailwindcss/vite';
 // import { nodePolyfills } from 'vite-plugin-node-polyfills';
 
 // https://vite.dev/config/
@@ -28,20 +29,12 @@ export default defineConfig({
 	plugins: [
 		react(),
 		svgr(),
-		cloudflare({
-			configPath: 'wrangler.jsonc',
-			experimental: { remoteBindings: true },
-		}), // Add the node polyfills plugin here
-		// nodePolyfills({
-		//     exclude: [
-		//       'tty', // Exclude 'tty' module
-		//     ],
-		//     // We recommend leaving this as `true` to polyfill `global`.
-		//     globals: {
-		//         global: true,
-		//     },
-		// })
-		tailwindcss(),
+		// Temporarily disable Cloudflare and TailwindCSS plugins due to ESM compatibility issues
+		// cloudflare({
+		//	configPath: 'wrangler.jsonc',
+		//	experimental: { remoteBindings: true },
+		// }),
+		// tailwindcss(),
 		// sentryVitePlugin({
 		// 	org: 'cloudflare-0u',
 		// 	project: 'javascript-react',
