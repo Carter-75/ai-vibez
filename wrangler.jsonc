@@ -1,9 +1,4 @@
-/**
- * Wrangler config
- * Docs: https://developers.cloudflare.com/workers/wrangler/configuration/
- */
 {
-  // "$schema": "node_modules/wrangler/config-schema.json",
   "name": "ai-vibez",
   "main": "worker/index.ts",
   "compatibility_date": "2025-08-10",
@@ -18,33 +13,17 @@
     "binding": "ASSETS"
   },
 
-  "observability": {
-    "enabled": true,
-    "head_sampling_rate": 1
-  },
+  "observability": { "enabled": true, "head_sampling_rate": 1 },
 
   "unsafe": {
     "bindings": [
-      {
-        "name": "API_RATE_LIMITER",
-        "type": "ratelimit",
-        "namespace_id": "2101",
-        "simple": { "limit": 10000, "period": 60 }
-      },
-      {
-        "name": "AUTH_RATE_LIMITER",
-        "type": "ratelimit",
-        "namespace_id": "2102",
-        "simple": { "limit": 1000, "period": 60 }
-      }
+      { "name": "API_RATE_LIMITER", "type": "ratelimit", "namespace_id": "2101", "simple": { "limit": 10000, "period": 60 } },
+      { "name": "AUTH_RATE_LIMITER", "type": "ratelimit", "namespace_id": "2102", "simple": { "limit": 1000, "period": 60 } }
     ]
   },
 
   "ai": { "binding": "AI", "remote": true },
   "images": { "binding": "IMAGES" },
-
-  // Containers removed (this is what was causing the Unauthorized error)
-  // "containers": [ ... ]
 
   "d1_databases": [
     {
@@ -78,8 +57,8 @@
   ],
 
   "routes": [
-    { "pattern": "ai-vibez.com", "custom_domain": true },
-    { "pattern": "www.ai-vibez.com", "custom_domain": true }
+    { "pattern": "ai-vibez.com/*", "zone_name": "ai-vibez.com" },
+    { "pattern": "www.ai-vibez.com/*", "zone_name": "ai-vibez.com" }
   ],
 
   "vars": {
@@ -94,3 +73,5 @@
   "workers_dev": false,
   "preview_urls": false
 }
+
+Later, if you want Cloudflare to remove the old Squarespace/Google DNS and let Workers manage the DNS record, we can switch to custom_domain with override. But you don’t have to; you’ll be live on ai-vibez.com with the file above.
