@@ -1,4 +1,4 @@
-name: Deploy AI Vibez - FULL ERROR DEBUG
+name: Deploy AI Vibez - DEBUG
 
 on:
   push:
@@ -9,326 +9,43 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      
       - uses: actions/setup-node@v4
         with:
           node-version: '20'
-          
       - run: npm install
-      
       - run: npm run build
         env:
           NODE_OPTIONS: '--max-old-space-size=8192'
           
-      # Set up authentication for wrangler commands
-      - name: Setup Cloudflare credentials
-        run: |
-          echo "Setting up Cloudflare authentication..."
-          echo "CLOUDFLARE_API_TOKEN=${{ secrets.CLOUDFLARE_API_TOKEN }}" >> $GITHUB_ENV
-          echo "CLOUDFLARE_ACCOUNT_ID=${{ secrets.CLOUDFLARE_ACCOUNT_ID }}" >> $GITHUB_ENV
-          
-      # Debug Cloudflare setup
-      - name: Debug Cloudflare setup
+      - name: Debug Deployment
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
         run: |
-          echo "🔍 Debugging Cloudflare setup..."
-          echo "Account ID (first 8 chars): $(echo $CLOUDFLARE_ACCOUNT_ID | cut -c1-8)..."
-          echo "API Token (first 8 chars): $(echo $CLOUDFLARE_API_TOKEN | cut -c1-8)..."
-          echo "Wrangler version: $(npx wrangler --version)"
-          echo "Testing wrangler authentication..."
-          npx wrangler whoami || echo "Authentication test failed"
-          
-      # Clean up Pages-related files that confuse wrangler
-      - name: Clean up Pages detection files
-        run: |
-          echo "🧹 Cleaning up files that cause Pages detection..."
-          rm -f dist/_routes.json
-          rm -rf functions/
-          echo "Files removed. This should be detected as a Workers project now."
-          
-      # Ensure D1 database exists and run migrations
-      - name: Setup D1 database and run migrations
-        env:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-        run: |
-          echo "Setting up D1 database..."
-          
-          # List all databases to check what's available
-          echo "📋 Listing all D1 databases..."
-          npx wrangler d1 list || echo "Failed to list databases"
-          
-          # Try to run migrations by database name first
-          echo "🔄 Attempting to apply migrations to ai-vibez-d1 by name..."
-          if npx wrangler d1 migrations apply ai-vibez-d1 --remote; then
-            echo "✅ Migrations applied successfully via database name"
-          else
-            echo "⚠️  Migration by name failed, trying by database ID..."
-            # Try by database ID from wrangler.toml
-            if npx wrangler d1 migrations apply --database-id=88c494f1-1236-4ce4-8b60-570776559000 --remote; then
-              echo "✅ Migrations applied successfully via database ID"
-            else
-              echo "⚠️  Both migration attempts failed"
-              echo "This might mean:"
-              echo "1. Database doesn't exist yet - create it in Cloudflare Dashboard"
-              echo "2. Migrations already applied"
-              echo "3. Permission issues"
-              echo "Continuing with deployment anyway..."
-            fi
-          fi
-          
-      # COMPREHENSIVE DEPLOYMENT DEBUG - This is the key section that will show actual errors
-      - name: 🚀 DEPLOYMENT WITH FULL ERROR CAPTURE AND LOG DISPLAY
-        env:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-        run: |
-          echo "🚀 DEPLOYMENT WITH COMPREHENSIVE ERROR LOGGING:"
-          echo "=============================================="
-          
-          # Set maximum wrangler verbosity
-          export WRANGLER_LOG=debug
-          export DEBUG=*
-          export NODE_ENV=production
-          
-          # Clear and prepare log directories
-          mkdir -p ~/.config/.wrangler/logs/
-          rm -f ~/.config/.wrangler/logs/* || true
-          
-          echo "📋 PRE-DEPLOYMENT CHECKS:"
-          echo "========================="
-          echo "Working directory: $(pwd)"
-          echo "Current user: $(whoami)"
-          echo "Node version: $(node --version)"
-          echo "NPM version: $(npm --version)"
-          echo "Wrangler version: $(npx wrangler --version)"
-          echo ""
-          
-          echo "📁 DIRECTORY STRUCTURE:"
-          echo "======================"
-          echo "Root files:"
-          ls -la | head -20
-          echo ""
-          echo "Dist directory exists: $(test -d dist && echo 'YES' || echo 'NO')"
+          echo "=== CRITICAL FILE CHECK ==="
+          echo "dist/_worker.js exists: $(test -f dist/_worker.js && echo 'YES' || echo 'NO - MISSING!')"
           if [ -d "dist" ]; then
             echo "Dist contents:"
             ls -la dist/
-            echo ""
-            echo "Critical files check:"
-            echo "_worker.js exists: $(test -f dist/_worker.js && echo 'YES ('$(stat -c%s dist/_worker.js)' bytes)' || echo 'NO - THIS IS THE PROBLEM!')"
-            echo "index.html exists: $(test -f dist/index.html && echo 'YES' || echo 'NO')"
-            echo "_routes.json exists: $(test -f dist/_routes.json && echo 'YES (will cause Pages detection)' || echo 'NO (good for Workers)')"
-          else
-            echo "❌ CRITICAL ERROR: dist directory does not exist!"
           fi
-          echo ""
           
-          echo "📄 WRANGLER CONFIGURATION:"
-          echo "=========================="
-          cat wrangler.toml
-          echo ""
-          
-          echo "🔐 AUTHENTICATION TEST:"
-          echo "======================"
-          if npx wrangler whoami; then
-            echo "✅ Authentication successful"
-          else
-            echo "❌ Authentication failed"
-          fi
-          echo ""
-          
-          echo "🚀 STARTING DEPLOYMENT WITH FULL LOGGING:"
-          echo "========================================="
-          
-          # Disable exit on error so we can capture logs even if deployment fails
+          echo "=== WRANGLER DEPLOY WITH FULL OUTPUT ==="
           set +e
+          npx wrangler deploy --config wrangler.toml --verbose 2>&1 | tee deploy.log
+          EXIT_CODE=$?
           
-          # Create a temporary script to capture ALL output
-          cat > deployment_script.sh << 'EOF'
-#!/bin/bash
-set -x  # Enable command tracing
-exec 2>&1  # Redirect stderr to stdout
-echo "=== DEPLOYMENT START ==="
-npx wrangler deploy --config wrangler.toml --verbose --compatibility-date=2024-10-02
-deployment_exit_code=$?
-echo "=== DEPLOYMENT END (exit code: $deployment_exit_code) ==="
-exit $deployment_exit_code
-EOF
+          echo "=== DEPLOYMENT LOG ==="
+          cat deploy.log
           
-          chmod +x deployment_script.sh
-          
-          echo "📊 EXECUTING DEPLOYMENT:"
-          echo "======================="
-          
-          # Run deployment and capture everything
-          ./deployment_script.sh 2>&1 | tee full_deployment_output.log
-          DEPLOYMENT_EXIT_CODE=${PIPESTATUS[0]}
-          
-          echo ""
-          echo "🔍 DEPLOYMENT ANALYSIS:"
-          echo "======================"
-          echo "Deployment exit code: $DEPLOYMENT_EXIT_CODE"
-          echo "Deployment script exit code: ${PIPESTATUS[0]}"
-          echo "Tee exit code: ${PIPESTATUS[1]}"
-          echo ""
-          
-          echo "📄 FULL DEPLOYMENT OUTPUT:"
-          echo "========================="
-          if [ -f "full_deployment_output.log" ]; then
-            echo "--- START OF DEPLOYMENT OUTPUT ---"
-            cat full_deployment_output.log
-            echo "--- END OF DEPLOYMENT OUTPUT ---"
-          else
-            echo "❌ No deployment output file found"
-          fi
-          echo ""
-          
-          echo "📂 WRANGLER LOG FILES:"
-          echo "===================="
+          echo "=== WRANGLER ERROR LOGS ==="
           if [ -d ~/.config/.wrangler/logs ]; then
-            echo "Wrangler log directory exists"
-            echo "Log files found:"
-            ls -la ~/.config/.wrangler/logs/ || echo "No log files in directory"
-            echo ""
-            
-            # Display ALL wrangler log files
-            for logfile in ~/.config/.wrangler/logs/*; do
-              if [ -f "$logfile" ]; then
-                echo "🔥🔥🔥 WRANGLER LOG FILE: $logfile 🔥🔥🔥"
-                echo "================================================"
-                cat "$logfile"
-                echo "================================================"
-                echo ""
+            for log in ~/.config/.wrangler/logs/*.log; do
+              if [ -f "$log" ]; then
+                echo "--- $log ---"
+                cat "$log"
               fi
             done
-          else
-            echo "❌ Wrangler log directory does not exist"
           fi
           
-          echo "🔍 SYSTEM ERROR LOGS:"
-          echo "==================="
-          
-          # Check for npm/node error logs
-          if [ -d ~/.npm/_logs ]; then
-            echo "NPM logs found:"
-            ls -la ~/.npm/_logs/ | head -10
-            echo "Latest NPM log (last 50 lines):"
-            find ~/.npm/_logs -name "*.log" -newer package.json -exec tail -n 50 {} \; 2>/dev/null || echo "No recent NPM logs"
-          fi
-          echo ""
-          
-          # Check system temp directory
-          echo "Checking /tmp for wrangler files:"
-          find /tmp -name "*wrangler*" -o -name "*cloudflare*" 2>/dev/null | head -10 || echo "No wrangler temp files"
-          echo ""
-          
-          echo "🔧 ADDITIONAL DEBUG INFO:"
-          echo "========================"
-          echo "Environment variables (wrangler/cloudflare related):"
-          env | grep -i -E "(wrangler|cloudflare|worker)" || echo "No relevant env vars"
-          echo ""
-          
-          echo "Network connectivity test:"
-          echo "Cloudflare API: $(curl -s -o /dev/null -w '%{http_code}' https://api.cloudflare.com/client/v4/user || echo 'FAILED')"
-          echo "Workers API: $(curl -s -o /dev/null -w '%{http_code}' https://api.cloudflare.com/client/v4/accounts || echo 'FAILED')"
-          echo ""
-          
-          echo "📊 FINAL DIAGNOSIS:"
-          echo "=================="
-          if [ $DEPLOYMENT_EXIT_CODE -eq 0 ]; then
-            echo "✅ DEPLOYMENT SUCCEEDED!"
-            echo "Checking deployment status:"
-            npx wrangler deployments list --name ai-vibez || echo "Cannot verify deployment"
-          else
-            echo "❌ DEPLOYMENT FAILED WITH EXIT CODE: $DEPLOYMENT_EXIT_CODE"
-            echo ""
-            echo "🔥 MOST LIKELY CAUSES BASED ON EXIT CODE $DEPLOYMENT_EXIT_CODE:"
-            case $DEPLOYMENT_EXIT_CODE in
-              1)
-                echo "- Missing or invalid dist/_worker.js file"
-                echo "- Wrangler configuration error"
-                echo "- Build process didn't complete successfully"
-                ;;
-              2)
-                echo "- Authentication failure"
-                echo "- Invalid API token or account ID"
-                ;;
-              3)
-                echo "- Network connectivity issues"
-                echo "- Cloudflare API unavailable"
-                ;;
-              *)
-                echo "- Unknown error - check logs above"
-                ;;
-            esac
-            echo ""
-            echo "🔧 DEBUGGING STEPS:"
-            echo "1. Check if dist/_worker.js exists and has content"
-            echo "2. Verify wrangler.toml configuration"
-            echo "3. Ensure build process completed successfully"
-            echo "4. Check Cloudflare API token permissions"
-          fi
-          echo "=================="
-          
-          # Always exit with the deployment exit code to fail the workflow if deployment failed
-          exit $DEPLOYMENT_EXIT_CODE
-          
-      # Set up Workers secrets (only run if deployment succeeded)
-      - name: Setup Workers secrets
-        env:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-        run: |
-          echo "Setting up Workers secrets..."
-          
-          # Set each secret for Workers project (not Pages)
-          echo "🔑 Setting GOOGLE_AI_STUDIO_API_KEY..."
-          echo "${{ secrets.GOOGLE_AI_STUDIO_API_KEY }}" | npx wrangler secret put GOOGLE_AI_STUDIO_API_KEY --name ai-vibez || echo "⚠️ Failed to set GOOGLE_AI_STUDIO_API_KEY"
-          
-          echo "🔑 Setting CLOUDFLARE_AI_GATEWAY_TOKEN..."
-          echo "${{ secrets.CLOUDFLARE_AI_GATEWAY_TOKEN }}" | npx wrangler secret put CLOUDFLARE_AI_GATEWAY_TOKEN --name ai-vibez || echo "⚠️ Failed to set CLOUDFLARE_AI_GATEWAY_TOKEN"
-          
-          echo "🔑 Setting JWT_SECRET..."
-          echo "${{ secrets.JWT_SECRET }}" | npx wrangler secret put JWT_SECRET --name ai-vibez || echo "⚠️ Failed to set JWT_SECRET"
-          
-          echo "🔑 Setting WEBHOOK_SECRET..."
-          echo "${{ secrets.WEBHOOK_SECRET }}" | npx wrangler secret put WEBHOOK_SECRET --name ai-vibez || echo "⚠️ Failed to set WEBHOOK_SECRET"
-          
-          echo "🔑 Setting SECRETS_ENCRYPTION_KEY..."
-          echo "${{ secrets.SECRETS_ENCRYPTION_KEY }}" | npx wrangler secret put SECRETS_ENCRYPTION_KEY --name ai-vibez || echo "⚠️ Failed to set SECRETS_ENCRYPTION_KEY"
-          
-          echo "🔑 Setting GOOGLE_CLIENT_ID..."
-          echo "${{ secrets.GOOGLE_CLIENT_ID }}" | npx wrangler secret put GOOGLE_CLIENT_ID --name ai-vibez || echo "⚠️ Failed to set GOOGLE_CLIENT_ID"
-          
-          echo "🔑 Setting GOOGLE_CLIENT_SECRET..."
-          echo "${{ secrets.GOOGLE_CLIENT_SECRET }}" | npx wrangler secret put GOOGLE_CLIENT_SECRET --name ai-vibez || echo "⚠️ Failed to set GOOGLE_CLIENT_SECRET"
-          
-          echo "✅ Workers secret setup completed"
-          
-      # Final status report
-      - name: Final Status Report
-        if: always()
-        run: |
-          echo "========================================"
-          echo "🎯 FINAL DEPLOYMENT STATUS REPORT"
-          echo "========================================"
-          echo "Timestamp: $(date)"
-          echo "Workflow Status: ${{ job.status }}"
-          
-          # Test if the site is accessible
-          echo "🌐 Testing site accessibility:"
-          if curl -s -o /dev/null -w "%{http_code}" https://ai-vibez.com | grep -q "200\|301\|302"; then
-            echo "✅ Site is accessible at https://ai-vibez.com"
-          else
-            echo "⚠️  Site may not be accessible yet at https://ai-vibez.com"
-          fi
-          
-          echo "========================================"
-          echo "🔧 Next Steps:"
-          echo "1. Visit https://ai-vibez.com to test the application"
-          echo "2. Test OAuth login functionality"
-          echo "3. Check Cloudflare Dashboard for deployment details"
-          echo "4. If deployment failed, check the comprehensive logs above"
-          echo "======================================="
+          echo "Exit code: $EXIT_CODE"
+          exit $EXIT_CODE
