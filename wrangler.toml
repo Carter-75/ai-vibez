@@ -1,5 +1,5 @@
 name = "ai-vibez"
-main = "dist/_worker.js"
+main = "worker/index.ts"
 compatibility_date = "2024-10-02"
 compatibility_flags = ["nodejs_compat"]
 
@@ -83,3 +83,12 @@ zone_name = "ai-vibez.com"
 [[routes]]
 pattern = "www.ai-vibez.com/*"
 zone_name = "ai-vibez.com"
+
+# Durable Objects migrations
+[[migrations]]
+tag = "v1"
+new_classes = [
+  "CodeGeneratorAgent",
+  "UserAppSandboxService",
+  "DORateLimitStore"
+]
