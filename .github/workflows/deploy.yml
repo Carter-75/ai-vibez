@@ -1,4 +1,4 @@
-name: Deploy AI Vibez to Cloudflare (FULL DEBUG)
+name: Deploy AI Vibez - MAXIMUM DEBUG MODE
 
 on:
   push:
@@ -87,7 +87,18 @@ jobs:
           du -sh node_modules 2>/dev/null || echo "node_modules doesn't exist yet"
           echo ""
           echo "Starting npm install..."
-          npm install --verbose
+          if npm install --verbose; then
+            echo "✅ NPM Install succeeded"
+          else
+            npm_exit_code=$?
+            echo "❌ NPM Install failed with exit code: $npm_exit_code"
+            echo ""
+            echo "📋 NPM ERROR LOGS:"
+            echo "=================="
+            cat ~/.npm/_logs/*.log 2>/dev/null || echo "No NPM logs found"
+            echo "=================="
+            exit $npm_exit_code
+          fi
           echo ""
           echo "After install - node_modules size:"
           du -sh node_modules
@@ -106,7 +117,23 @@ jobs:
           ls -la dist/ 2>/dev/null || echo "dist directory doesn't exist yet"
           echo ""
           echo "Starting build process..."
-          npm run build
+          if npm run build; then
+            echo "✅ Build succeeded"
+          else
+            build_exit_code=$?
+            echo "❌ Build failed with exit code: $build_exit_code"
+            echo ""
+            echo "📋 BUILD ERROR DETAILS:"
+            echo "======================="
+            echo "Checking for build logs..."
+            find . -name "*.log" -newer package.json 2>/dev/null | while read logfile; do
+              echo "--- Contents of $logfile ---"
+              cat "$logfile"
+              echo ""
+            done
+            echo "======================="
+            exit $build_exit_code
+          fi
           echo ""
           echo "After build - dist directory:"
           ls -la dist/
@@ -115,7 +142,7 @@ jobs:
           du -sh dist/
           echo ""
           echo "Key files check:"
-          echo "_worker.js exists: $(test -f dist/_worker.js && echo 'YES ('$(stat -f%z dist/_worker.js 2>/dev/null || stat -c%s dist/_worker.js)' bytes)' || echo 'NO')"
+          echo "_worker.js exists: $(test -f dist/_worker.js && echo 'YES ('$(stat -c%s dist/_worker.js)' bytes)' || echo 'NO')"
           echo "index.html exists: $(test -f dist/index.html && echo 'YES' || echo 'NO')"
           echo "_routes.json exists: $(test -f dist/_routes.json && echo 'YES (will be removed)' || echo 'NO')"
           echo "======================="
@@ -148,13 +175,36 @@ jobs:
           npx wrangler --version
           echo ""
           echo "Testing authentication..."
-          npx wrangler whoami || echo "Authentication failed"
+          if npx wrangler whoami; then
+            echo "✅ Authentication successful"
+          else
+            auth_exit_code=$?
+            echo "❌ Authentication failed with exit code: $auth_exit_code"
+            echo ""
+            echo "📋 AUTHENTICATION ERROR LOGS:"
+            echo "============================="
+            find ~/.config/.wrangler/logs/ -name "*.log" 2>/dev/null | while read logfile; do
+              echo "--- Contents of $logfile ---"
+              cat "$logfile"
+              echo ""
+            done || echo "No wrangler logs found yet"
+            echo "============================="
+            echo "This might be expected if tokens aren't set up yet..."
+          fi
           echo ""
           echo "Listing D1 databases:"
-          npx wrangler d1 list || echo "D1 list failed"
+          if npx wrangler d1 list; then
+            echo "✅ D1 list successful"
+          else
+            echo "⚠️ D1 list failed (might be permissions or no databases)"
+          fi
           echo ""
           echo "Checking Workers:"
-          npx wrangler deployments list --name ai-vibez || echo "Workers list failed"
+          if npx wrangler deployments list --name ai-vibez; then
+            echo "✅ Worker deployments accessible"
+          else
+            echo "⚠️ Worker deployments not accessible (might be first deployment)"
+          fi
           echo "================================="
           
       - name: 🗄️ Database Migration Debug
@@ -174,19 +224,130 @@ jobs:
           if npx wrangler d1 migrations apply ai-vibez-d1 --remote; then
             echo "✅ Migration successful"
           else
-            echo "⚠️ Migration failed, trying alternative approaches..."
+            migration_exit_code=$?
+            echo "⚠️ Migration failed with exit code: $migration_exit_code"
+            echo ""
+            echo "📋 MIGRATION ERROR LOGS:"
+            echo "========================"
+            find ~/.config/.wrangler/logs/ -name "*.log" 2>/dev/null | while read logfile; do
+              echo "--- Contents of $logfile ---"
+              cat "$logfile"
+              echo ""
+            done || echo "No migration logs found"
+            echo "========================"
+            echo ""
+            echo "Trying alternative migration approaches..."
             npx wrangler d1 migrations apply --database-id=88c494f1-1236-4ce4-8b60-570776559000 --remote || echo "Alternative migration also failed"
           fi
           echo "============================"
           
-      - name: 🚀 Deployment Debug
-        uses: cloudflare/wrangler-action@v3
-        with:
-          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: deploy --config wrangler.toml --verbose
+      - name: 🚀 DEPLOYMENT WITH FULL ERROR CAPTURE
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          echo "🚀 DEPLOYMENT WITH FULL ERROR CAPTURE:"
+          echo "======================================"
           
-      - name: 🔑 Secrets Management Debug
+          # Set maximum wrangler verbosity
+          export WRANGLER_LOG=debug
+          export DEBUG=*
+          
+          # Clear any existing log files and create log directory
+          mkdir -p ~/.config/.wrangler/logs/
+          rm -f ~/.config/.wrangler/logs/*
+          
+          echo "Pre-deployment configuration check:"
+          echo "wrangler.toml content:"
+          cat wrangler.toml
+          echo ""
+          
+          echo "Starting deployment with maximum verbosity..."
+          if npx wrangler deploy --config wrangler.toml --verbose --compatibility-date=2024-10-02 2>&1; then
+            echo "✅ DEPLOYMENT SUCCEEDED!"
+            deployment_success=true
+          else
+            deployment_exit_code=$?
+            echo "❌ DEPLOYMENT FAILED with exit code: $deployment_exit_code"
+            deployment_success=false
+            
+            echo ""
+            echo "🔥 IMMEDIATE ERROR ANALYSIS:"
+            echo "============================"
+            echo "Exit code: $deployment_exit_code"
+            echo "Last command: npx wrangler deploy --config wrangler.toml --verbose --compatibility-date=2024-10-02"
+            echo "Working directory: $(pwd)"
+            echo "Files in current directory:"
+            ls -la
+            echo ""
+            
+            echo "📋 WRANGLER ERROR LOGS (COMPLETE):"
+            echo "=================================="
+            
+            # Display all wrangler log files with detailed info
+            if ls ~/.config/.wrangler/logs/ >/dev/null 2>&1; then
+              echo "Available log files:"
+              ls -la ~/.config/.wrangler/logs/
+              echo ""
+              
+              # Display contents of ALL log files
+              for logfile in ~/.config/.wrangler/logs/*; do
+                if [ -f "$logfile" ]; then
+                  echo "🔥🔥🔥 CONTENTS OF $logfile 🔥🔥🔥"
+                  echo "============================================"
+                  cat "$logfile"
+                  echo "============================================"
+                  echo ""
+                fi
+              done
+            else
+              echo "❌ No wrangler log directory found at ~/.config/.wrangler/logs/"
+              echo ""
+              echo "Checking alternative log locations:"
+              find /home/runner -name "wrangler*.log" -o -name "*.log" | head -10 || echo "No log files found anywhere"
+            fi
+            
+            echo "🔍 ADDITIONAL DEBUGGING INFO:"
+            echo "============================="
+            echo "Environment variables (wrangler-related):"
+            env | grep -i wrangler || echo "No wrangler env vars"
+            echo ""
+            echo "Cloudflare config:"
+            cat ~/.cloudflare/credentials 2>/dev/null || echo "No Cloudflare credentials file"
+            echo ""
+            echo "System temp directory:"
+            ls -la /tmp/ | grep -i wrangler || echo "No wrangler temp files"
+            echo ""
+            echo "Recent system logs:"
+            journalctl --no-pager -n 20 2>/dev/null || echo "Cannot access system logs"
+            echo ""
+            echo "Network connectivity test:"
+            curl -I https://api.cloudflare.com/client/v4/user 2>&1 || echo "Cannot reach Cloudflare API"
+            echo "============================="
+            
+            # Don't exit yet - continue to show more debug info
+          fi
+          
+          echo ""
+          echo "📊 DEPLOYMENT STATUS SUMMARY:"
+          echo "============================="
+          if [ "$deployment_success" = true ]; then
+            echo "✅ Deployment completed successfully"
+            echo "Checking final deployment status:"
+            npx wrangler deployments list --name ai-vibez || echo "Cannot list deployments"
+          else
+            echo "❌ Deployment failed - see error logs above"
+            echo "Exit code: $deployment_exit_code"
+          fi
+          echo "============================="
+          
+          # Exit with original deployment exit code if it failed
+          if [ "$deployment_success" != true ]; then
+            exit $deployment_exit_code
+          fi
+          
+      - name: 🔑 Secrets Management Debug (only if deployment succeeded)
+        if: success()
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
@@ -196,89 +357,122 @@ jobs:
           echo "Checking current Worker secrets..."
           npx wrangler secret list --name ai-vibez || echo "Failed to list secrets"
           echo ""
-          echo "Attempting to set secrets (will try both Workers and Pages methods)..."
+          echo "Attempting to set secrets..."
           
-          # Function to try multiple secret setting methods
-          set_secret_debug() {
+          # Function to try multiple secret setting methods with full error capture
+          set_secret_with_full_debug() {
             local secret_name=$1
             local secret_value=$2
             
-            echo "Setting $secret_name..."
+            echo "🔑 Setting $secret_name..."
+            echo "------------------------"
+            
+            # Clear logs before each attempt
+            rm -f ~/.config/.wrangler/logs/*
             
             # Method 1: Workers secret
+            echo "Trying Workers method..."
             if echo "$secret_value" | npx wrangler secret put "$secret_name" --name ai-vibez 2>&1; then
               echo "✅ $secret_name set via Workers method"
               return 0
+            else
+              workers_exit_code=$?
+              echo "❌ Workers method failed (exit code: $workers_exit_code)"
+              
+              # Show logs from this attempt
+              for logfile in ~/.config/.wrangler/logs/*; do
+                if [ -f "$logfile" ]; then
+                  echo "Workers method error log:"
+                  cat "$logfile"
+                fi
+              done
             fi
             
+            # Clear logs before next attempt
+            rm -f ~/.config/.wrangler/logs/*
+            
             # Method 2: Pages secret with project name
+            echo "Trying Pages method with project name..."
             if echo "$secret_value" | npx wrangler pages secret put "$secret_name" --project-name ai-vibez 2>&1; then
               echo "✅ $secret_name set via Pages method (with project)"
               return 0
+            else
+              pages_exit_code=$?
+              echo "❌ Pages method with project failed (exit code: $pages_exit_code)"
+              
+              # Show logs from this attempt
+              for logfile in ~/.config/.wrangler/logs/*; do
+                if [ -f "$logfile" ]; then
+                  echo "Pages method error log:"
+                  cat "$logfile"
+                fi
+              done
             fi
             
-            # Method 3: Pages secret without project name
-            if echo "$secret_value" | npx wrangler pages secret put "$secret_name" 2>&1; then
-              echo "✅ $secret_name set via Pages method (default)"
-              return 0
-            fi
-            
-            echo "❌ Failed to set $secret_name with any method"
+            echo "❌ All methods failed for $secret_name"
+            echo "------------------------"
             return 1
           }
           
           # Only set non-empty secrets from GitHub
-          [ -n "${{ secrets.GOOGLE_CLIENT_ID }}" ] && set_secret_debug "GOOGLE_CLIENT_ID" "${{ secrets.GOOGLE_CLIENT_ID }}"
-          [ -n "${{ secrets.GOOGLE_CLIENT_SECRET }}" ] && set_secret_debug "GOOGLE_CLIENT_SECRET" "${{ secrets.GOOGLE_CLIENT_SECRET }}"
-          [ -n "${{ secrets.JWT_SECRET }}" ] && set_secret_debug "JWT_SECRET" "${{ secrets.JWT_SECRET }}"
-          [ -n "${{ secrets.GOOGLE_AI_STUDIO_API_KEY }}" ] && set_secret_debug "GOOGLE_AI_STUDIO_API_KEY" "${{ secrets.GOOGLE_AI_STUDIO_API_KEY }}"
-          [ -n "${{ secrets.CLOUDFLARE_AI_GATEWAY_TOKEN }}" ] && set_secret_debug "CLOUDFLARE_AI_GATEWAY_TOKEN" "${{ secrets.CLOUDFLARE_AI_GATEWAY_TOKEN }}"
-          [ -n "${{ secrets.SECRETS_ENCRYPTION_KEY }}" ] && set_secret_debug "SECRETS_ENCRYPTION_KEY" "${{ secrets.SECRETS_ENCRYPTION_KEY }}"
-          [ -n "${{ secrets.WEBHOOK_SECRET }}" ] && set_secret_debug "WEBHOOK_SECRET" "${{ secrets.WEBHOOK_SECRET }}"
+          [ -n "${{ secrets.GOOGLE_CLIENT_ID }}" ] && set_secret_with_full_debug "GOOGLE_CLIENT_ID" "${{ secrets.GOOGLE_CLIENT_ID }}"
+          [ -n "${{ secrets.GOOGLE_CLIENT_SECRET }}" ] && set_secret_with_full_debug "GOOGLE_CLIENT_SECRET" "${{ secrets.GOOGLE_CLIENT_SECRET }}"
+          [ -n "${{ secrets.JWT_SECRET }}" ] && set_secret_with_full_debug "JWT_SECRET" "${{ secrets.JWT_SECRET }}"
+          [ -n "${{ secrets.GOOGLE_AI_STUDIO_API_KEY }}" ] && set_secret_with_full_debug "GOOGLE_AI_STUDIO_API_KEY" "${{ secrets.GOOGLE_AI_STUDIO_API_KEY }}"
+          [ -n "${{ secrets.CLOUDFLARE_AI_GATEWAY_TOKEN }}" ] && set_secret_with_full_debug "CLOUDFLARE_AI_GATEWAY_TOKEN" "${{ secrets.CLOUDFLARE_AI_GATEWAY_TOKEN }}"
+          [ -n "${{ secrets.SECRETS_ENCRYPTION_KEY }}" ] && set_secret_with_full_debug "SECRETS_ENCRYPTION_KEY" "${{ secrets.SECRETS_ENCRYPTION_KEY }}"
+          [ -n "${{ secrets.WEBHOOK_SECRET }}" ] && set_secret_with_full_debug "WEBHOOK_SECRET" "${{ secrets.WEBHOOK_SECRET }}"
           
           echo ""
-          echo "Final secret list check:"
-          npx wrangler secret list --name ai-vibez || echo "Failed to list final secrets"
+          echo "Final secret verification:"
+          npx wrangler secret list --name ai-vibez || echo "Failed to verify final secrets"
           echo "============================"
           
-      - name: 🌐 Deployment Verification Debug
+      - name: 🌐 Final Deployment Verification
+        if: success()
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
         run: |
-          echo "🌐 DEPLOYMENT VERIFICATION DEBUG:"
+          echo "🌐 FINAL DEPLOYMENT VERIFICATION:"
           echo "================================="
-          echo "Checking deployment status..."
+          echo "Checking deployment status:"
           npx wrangler deployments list --name ai-vibez || echo "Failed to get deployments"
           echo ""
-          echo "Testing deployment URLs..."
+          echo "Testing deployment URLs:"
           echo "Primary domain: https://ai-vibez.com"
-          curl -I https://ai-vibez.com || echo "Primary domain not accessible"
+          curl -I https://ai-vibez.com 2>&1 || echo "Primary domain not accessible yet"
           echo ""
           echo "WWW domain: https://www.ai-vibez.com"  
-          curl -I https://www.ai-vibez.com || echo "WWW domain not accessible"
-          echo ""
-          echo "Worker subdomain:"
-          npx wrangler deployments list --name ai-vibez | grep -o 'https://.*workers\.dev' | head -1 || echo "No worker subdomain found"
+          curl -I https://www.ai-vibez.com 2>&1 || echo "WWW domain not accessible yet"
           echo "================================="
           
-      - name: 📊 Final Status Summary
+      - name: 📊 COMPREHENSIVE FINAL STATUS
         if: always()
         run: |
-          echo "📊 FINAL DEPLOYMENT STATUS SUMMARY:"
-          echo "==================================="
-          echo "Deployment completed at: $(date)"
-          echo "Exit codes from previous steps:"
-          echo "- NPM Install: $?"
-          echo "- Build Process: Checked above"
-          echo "- Authentication: Checked above"  
-          echo "- Migration: Checked above"
-          echo "- Deployment: Checked above"
-          echo "- Secrets: Checked above"
+          echo "📊 COMPREHENSIVE FINAL STATUS:"
+          echo "============================="
+          echo "Workflow completed at: $(date)"
+          echo "Overall job status: ${{ job.status }}"
           echo ""
-          echo "🎯 Next steps:"
-          echo "1. Visit https://ai-vibez.com"
-          echo "2. Test OAuth login functionality"
-          echo "3. Create your first AI app"
-          echo "4. Monitor Cloudflare Dashboard for any issues"
-          echo "==================================="
+          echo "🎯 Summary:"
+          if [ "${{ job.status }}" = "success" ]; then
+            echo "✅ All steps completed successfully!"
+            echo "✅ Your AI Vibez app should be live at https://ai-vibez.com"
+            echo "✅ OAuth authentication should be working"
+            echo "✅ Ready to create AI applications!"
+          else
+            echo "❌ Deployment encountered issues"
+            echo "📋 Check the error logs above for specific details"
+            echo "🔧 Common fixes:"
+            echo "   - Verify all secrets are set in GitHub and Cloudflare"
+            echo "   - Check Cloudflare API token permissions"
+            echo "   - Ensure account ID is correct"
+          fi
+          echo ""
+          echo "🔍 Next steps:"
+          echo "1. Review any error messages above"
+          echo "2. Visit https://ai-vibez.com to test"
+          echo "3. Check Cloudflare Dashboard for deployment status"
+          echo "4. Test OAuth login functionality"
+          echo "============================="
