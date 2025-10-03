@@ -26,9 +26,9 @@ class_name = "CodeGeneratorAgent"
 name = "Sandbox"
 class_name = "UserAppSandboxService"
 
-[[durable_objects.bindings]]
-name = "DORateLimitStore"
-class_name = "DORateLimitStore"
+#[[durable_objects.bindings]]
+#name = "DORateLimitStore"
+#class_name = "DORateLimitStore"
 
 [[r2_buckets]]
 binding = "TEMPLATES_BUCKET"
@@ -77,8 +77,8 @@ zone_name = "ai-vibez.com"
 # Durable Objects migrations
 [[migrations]]
 tag = "v1"
-new_classes = [
+new_sqlite_classes = [
   "CodeGeneratorAgent",
   "UserAppSandboxService",
-  "DORateLimitStore"
+  #"DORateLimitStore"
 ]
