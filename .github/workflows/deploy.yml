@@ -40,6 +40,14 @@ jobs:
           echo "Testing wrangler authentication..."
           npx wrangler whoami || echo "Authentication test failed"
           
+      # Clean up Pages-related files that confuse wrangler
+      - name: Clean up Pages detection files
+        run: |
+          echo "🧹 Cleaning up files that cause Pages detection..."
+          rm -f dist/_routes.json
+          rm -rf functions/
+          echo "Files removed. This should be detected as a Workers project now."
+          
       # Ensure D1 database exists and run migrations
       - name: Setup D1 database and run migrations
         env:
@@ -71,41 +79,41 @@ jobs:
             fi
           fi
           
-      # Deploy the application
+      # Deploy the Workers application (not Pages!)
       - uses: cloudflare/wrangler-action@v3
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: deploy --config wrangler.toml 
+          command: deploy --config wrangler.toml
           
-      # Set up secrets after deployment
-      - name: Setup application secrets
+      # Set up Workers secrets (not Pages secrets!)
+      - name: Setup Workers secrets
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
         run: |
-          echo "Setting up application secrets..."
+          echo "Setting up Workers secrets..."
           
-          # Set each secret with error handling
+          # Set each secret for Workers project (not Pages)
           echo "🔑 Setting GOOGLE_AI_STUDIO_API_KEY..."
-          echo "${{ secrets.GOOGLE_AI_STUDIO_API_KEY }}" | npx wrangler secret put GOOGLE_AI_STUDIO_API_KEY || echo "⚠️ Failed to set GOOGLE_AI_STUDIO_API_KEY"
+          echo "${{ secrets.GOOGLE_AI_STUDIO_API_KEY }}" | npx wrangler secret put GOOGLE_AI_STUDIO_API_KEY --name ai-vibez || echo "⚠️ Failed to set GOOGLE_AI_STUDIO_API_KEY"
           
           echo "🔑 Setting CLOUDFLARE_AI_GATEWAY_TOKEN..."
-          echo "${{ secrets.CLOUDFLARE_AI_GATEWAY_TOKEN }}" | npx wrangler secret put CLOUDFLARE_AI_GATEWAY_TOKEN || echo "⚠️ Failed to set CLOUDFLARE_AI_GATEWAY_TOKEN"
+          echo "${{ secrets.CLOUDFLARE_AI_GATEWAY_TOKEN }}" | npx wrangler secret put CLOUDFLARE_AI_GATEWAY_TOKEN --name ai-vibez || echo "⚠️ Failed to set CLOUDFLARE_AI_GATEWAY_TOKEN"
           
           echo "🔑 Setting JWT_SECRET..."
-          echo "${{ secrets.JWT_SECRET }}" | npx wrangler secret put JWT_SECRET || echo "⚠️ Failed to set JWT_SECRET"
+          echo "${{ secrets.JWT_SECRET }}" | npx wrangler secret put JWT_SECRET --name ai-vibez || echo "⚠️ Failed to set JWT_SECRET"
           
           echo "🔑 Setting WEBHOOK_SECRET..."
-          echo "${{ secrets.WEBHOOK_SECRET }}" | npx wrangler secret put WEBHOOK_SECRET || echo "⚠️ Failed to set WEBHOOK_SECRET"
+          echo "${{ secrets.WEBHOOK_SECRET }}" | npx wrangler secret put WEBHOOK_SECRET --name ai-vibez || echo "⚠️ Failed to set WEBHOOK_SECRET"
           
           echo "🔑 Setting SECRETS_ENCRYPTION_KEY..."
-          echo "${{ secrets.SECRETS_ENCRYPTION_KEY }}" | npx wrangler secret put SECRETS_ENCRYPTION_KEY || echo "⚠️ Failed to set SECRETS_ENCRYPTION_KEY"
+          echo "${{ secrets.SECRETS_ENCRYPTION_KEY }}" | npx wrangler secret put SECRETS_ENCRYPTION_KEY --name ai-vibez || echo "⚠️ Failed to set SECRETS_ENCRYPTION_KEY"
           
           echo "🔑 Setting GOOGLE_CLIENT_ID..."
-          echo "${{ secrets.GOOGLE_CLIENT_ID }}" | npx wrangler secret put GOOGLE_CLIENT_ID || echo "⚠️ Failed to set GOOGLE_CLIENT_ID"
+          echo "${{ secrets.GOOGLE_CLIENT_ID }}" | npx wrangler secret put GOOGLE_CLIENT_ID --name ai-vibez || echo "⚠️ Failed to set GOOGLE_CLIENT_ID"
           
           echo "🔑 Setting GOOGLE_CLIENT_SECRET..."
-          echo "${{ secrets.GOOGLE_CLIENT_SECRET }}" | npx wrangler secret put GOOGLE_CLIENT_SECRET || echo "⚠️ Failed to set GOOGLE_CLIENT_SECRET"
+          echo "${{ secrets.GOOGLE_CLIENT_SECRET }}" | npx wrangler secret put GOOGLE_CLIENT_SECRET --name ai-vibez || echo "⚠️ Failed to set GOOGLE_CLIENT_SECRET"
           
-          echo "✅ Secret setup completed"
+          echo "✅ Workers secret setup completed"
