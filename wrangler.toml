@@ -6,16 +6,6 @@ compatibility_flags = ["nodejs_compat"]
 [observability]
 enabled = true
 
-[[unsafe.bindings]]
-name = "API_RATE_LIMITER"
-type = "ratelimit"
-namespace_id = "2101"
-
-[[unsafe.bindings]]
-name = "AUTH_RATE_LIMITER" 
-type = "ratelimit"
-namespace_id = "2102"
-
 [ai]
 binding = "AI"
 
