@@ -22,7 +22,7 @@
   "d1_databases": [
     {
       "binding": "DB",
-      "database_name": "ai-vibez.d1",
+      "database_name": "ai-vibez-d1",
       "database_id": "23af99f4-3364-4af5-a3e0-3d5754de84b1",
       "migrations_dir": "migrations",
       "remote": true
