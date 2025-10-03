@@ -24,8 +24,8 @@ binding = "IMAGES"
 
 [[d1_databases]]
 binding = "DB"
-database_name = "ai-vibez.d1"
-database_id = "23af99f4-3364-4af5-a3e0-3d5754de84b1"
+database_name = "ai-vibez-db"
+database_id = "YOUR_D1_DATABASE_ID_HERE"
 migrations_dir = "migrations"
 
 [[durable_objects.bindings]]
@@ -46,7 +46,7 @@ bucket_name = "ai-vibez-r2"
 
 [[kv_namespaces]]
 binding = "VibecoderStore"
-id = "d378753f952547908384f7c69fc35779"
+id = "YOUR_KV_NAMESPACE_ID_HERE"
 
 # Static assets binding for serving frontend files
 [assets]
@@ -54,19 +54,10 @@ binding = "ASSETS"
 directory = "dist"
 
 [vars]
-TEMPLATES_REPOSITORY = "https://github.com/cloudflare/ai-vibez"
+TEMPLATES_REPOSITORY = "https://github.com/Carter-75/ai-vibez"
 ALLOWED_EMAIL = "cartermoyer75@gmail.com"
 ENABLE_EMAIL_WHITELIST = "false"
 DISABLE_EMAIL_AUTH = "false"
 CLOUDFLARE_AI_GATEWAY = "ai-vibez-gateway"
-CUSTOM_DOMAIN = "ai-vibez.com"
 MAX_SANDBOX_INSTANCES = "10"
 SANDBOX_INSTANCE_TYPE = "standard"
-
-[[routes]]
-pattern = "ai-vibez.com/*"
-zone_name = "ai-vibez.com"
-
-[[routes]]
-pattern = "www.ai-vibez.com/*"
-zone_name = "ai-vibez.com"
