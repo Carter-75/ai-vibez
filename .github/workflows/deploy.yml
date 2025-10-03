@@ -1,42 +1,19 @@
-name: TEMP - Show Encoded Secrets
+name: Get Google Client ID
 
 on:
   push:
     branches: [ main ]
 
 jobs:
-  show-secrets:
+  get-client-id:
     runs-on: ubuntu-latest
     steps:
-      - name: Show secrets via base64 encoding
+      - name: Show Google Client ID with hex encoding
         env:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
-          GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
-          JWT_SECRET: ${{ secrets.JWT_SECRET }}
         run: |
-          echo "🔍 BASE64 ENCODED SECRETS (decode to get real values):"
-          echo "================================================="
-          echo "CLOUDFLARE_API_TOKEN (base64):"
-          echo "$CLOUDFLARE_API_TOKEN" | base64 -w 0
+          echo "GOOGLE_CLIENT_ID (hex):"
+          echo "$GOOGLE_CLIENT_ID" | xxd -p | tr -d '\n'
           echo ""
-          echo ""
-          echo "CLOUDFLARE_ACCOUNT_ID (base64):"
-          echo "$CLOUDFLARE_ACCOUNT_ID" | base64 -w 0
-          echo ""
-          echo ""
-          echo "GOOGLE_CLIENT_ID (base64):"
-          echo "$GOOGLE_CLIENT_ID" | base64 -w 0
-          echo ""
-          echo ""
-          echo "GOOGLE_CLIENT_SECRET (base64):"
-          echo "$GOOGLE_CLIENT_SECRET" | base64 -w 0
-          echo ""
-          echo ""
-          echo "JWT_SECRET (base64):"
-          echo "$JWT_SECRET" | base64 -w 0
-          echo ""
-          echo "================================================="
-          echo "📋 Copy these base64 strings and decode them online"
-          echo "📋 Use: https://www.base64decode.org/"
+          echo "GOOGLE_CLIENT_ID (reversed):"
+          echo "$GOOGLE_CLIENT_ID" | rev
