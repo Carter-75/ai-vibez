@@ -24,7 +24,7 @@ jobs:
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: deploy
+          command: deploy --config wrangler.toml 
           preCommands: |
             echo "Setting up database migrations..."
             #wrangler d1 migrations apply ai-vibez-d1 --remote
