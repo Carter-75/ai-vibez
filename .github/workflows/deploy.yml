@@ -1,32 +1,38 @@
-name: Deploy AI Vibez Worker
+name: Deploy AI Vibez to Cloudflare
 
 on:
   push:
     branches: [ main ]
-  workflow_dispatch:
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    name: Deploy to Cloudflare Worker
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup Bun
-        uses: oven-sh/setup-bun@v1
+      - uses: actions/checkout@v4
+      
+      - uses: actions/setup-node@v4
         with:
-          bun-version: latest
-
-      - name: Install dependencies
-        run: bun install
-
-      - name: Build project
-        run: bun run build
-
-      - name: Deploy Worker
-        uses: cloudflare/wrangler-action@v3
+          node-version: '20'
+          cache: 'npm'
+          
+      - run: npm ci
+      
+      - run: npm run build:fast
+        env:
+          NODE_OPTIONS: '--max-old-space-size=8192'
+          
+      - uses: cloudflare/wrangler-action@v3
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: deploy --name ai-vibez --env production
+          command: deploy
+          preCommands: |
+            wrangler d1 migrations apply ai-vibez-db --remote
+          postCommands: |
+            echo "${{ secrets.GOOGLE_AI_STUDIO_API_KEY }}" | wrangler secret put GOOGLE_AI_STUDIO_API_KEY
+            echo "${{ secrets.CLOUDFLARE_AI_GATEWAY_TOKEN }}" | wrangler secret put CLOUDFLARE_AI_GATEWAY_TOKEN
+            echo "${{ secrets.JWT_SECRET }}" | wrangler secret put JWT_SECRET
+            echo "${{ secrets.WEBHOOK_SECRET }}" | wrangler secret put WEBHOOK_SECRET
+            echo "${{ secrets.SECRETS_ENCRYPTION_KEY }}" | wrangler secret put SECRETS_ENCRYPTION_KEY
+            echo "${{ secrets.GOOGLE_CLIENT_ID }}" | wrangler secret put GOOGLE_CLIENT_ID
+            echo "${{ secrets.GOOGLE_CLIENT_SECRET }}" | wrangler secret put GOOGLE_CLIENT_SECRET
