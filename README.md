@@ -422,7 +422,7 @@ Want to contribute to Cloudflare VibeSDK? Here's how:
 - [Full-Stack Guide](https://developers.cloudflare.com/pages/tutorials/build-a-blog-using-nuxt-and-sanity/) - Build complete applications
 - [AI Integration](https://developers.cloudflare.com/workers-ai/) - Add AI to your apps
 
----
+--- 
 
 ## 📄 License
 
