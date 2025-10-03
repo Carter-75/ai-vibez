@@ -25,7 +25,7 @@ binding = "IMAGES"
 [[d1_databases]]
 binding = "DB"
 database_name = "ai-vibez-db"
-database_id = "YOUR_D1_DATABASE_ID_HERE"
+database_id = "REPLACE_WITH_YOUR_D1_DATABASE_ID"
 migrations_dir = "migrations"
 
 [[durable_objects.bindings]]
@@ -46,7 +46,7 @@ bucket_name = "ai-vibez-r2"
 
 [[kv_namespaces]]
 binding = "VibecoderStore"
-id = "YOUR_KV_NAMESPACE_ID_HERE"
+id = "REPLACE_WITH_YOUR_KV_NAMESPACE_ID"
 
 # Static assets binding for serving frontend files
 [assets]
@@ -60,6 +60,11 @@ CLOUDFLARE_AI_GATEWAY = "ai-vibez-gateway"
 MAX_SANDBOX_INSTANCES = "10"
 SANDBOX_INSTANCE_TYPE = "standard"
 
+# Custom Domain Configuration
+CUSTOM_DOMAIN = "ai-vibez.com"
+APP_URL = "https://ai-vibez.com"
+API_BASE_URL = "https://ai-vibez.com/api"
+
 # Authentication Configuration - LOGIN IS REQUIRED!
 ENABLE_EMAIL_WHITELIST = "false"  # Set to "true" to restrict access to specific emails
 DISABLE_EMAIL_AUTH = "false"      # Keep false - provides email/password backup login
@@ -69,3 +74,12 @@ REQUIRE_AUTHENTICATION = "true"   # Users MUST log in to use the app
 # Security Settings
 ENVIRONMENT = "production"
 SESSION_TIMEOUT_HOURS = "24"      # How long users stay logged in
+
+# Custom domain routes - ai-vibez.com
+[[routes]]
+pattern = "ai-vibez.com/*"
+zone_name = "ai-vibez.com"
+
+[[routes]]
+pattern = "www.ai-vibez.com/*"
+zone_name = "ai-vibez.com"

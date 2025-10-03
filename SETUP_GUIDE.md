@@ -54,8 +54,12 @@
 3. Click **Create Credentials** → **OAuth client ID**
 4. Application type: **Web application**
 5. Name: `AI Vibez Login`
-6. **Authorized JavaScript origins**: `https://ai-vibez.YOUR-USERNAME.workers.dev`
-7. **Authorized redirect URIs**: `https://ai-vibez.YOUR-USERNAME.workers.dev/api/auth/google/callback`
+6. **Authorized JavaScript origins**: 
+   - `https://ai-vibez.com`
+   - `https://www.ai-vibez.com`
+7. **Authorized redirect URIs**: 
+   - `https://ai-vibez.com/api/auth/google/callback`
+   - `https://www.ai-vibez.com/api/auth/google/callback`
 8. ✅ **COPY Client ID and Client Secret**
 9. ➡️ **Replace `your-google-oauth-client-id` and `your-google-oauth-client-secret` in `.dev.vars`**
 
@@ -63,8 +67,8 @@
 1. Go to [GitHub Settings](https://github.com/settings/developers) → **OAuth Apps**
 2. Click **New OAuth App**
 3. Application name: `AI Vibez`  
-4. Homepage URL: `https://ai-vibez.YOUR-USERNAME.workers.dev`
-5. Authorization callback URL: `https://ai-vibez.YOUR-USERNAME.workers.dev/api/auth/github/callback`
+4. Homepage URL: `https://ai-vibez.com`
+5. Authorization callback URL: `https://ai-vibez.com/api/auth/github/callback`
 6. ✅ **COPY Client ID and Client Secret**
 7. ➡️ **Replace `your-github-oauth-client-id` and `your-github-oauth-client-secret` in `.dev.vars`**
 
@@ -127,15 +131,34 @@ Once you provide the IDs and tokens:
 
 ---
 
+## 🌐 CUSTOM DOMAIN SETUP
+
+**Your app is configured for: `ai-vibez.com`**
+
+### **Domain Requirements**
+1. **Add ai-vibez.com to Cloudflare**:
+   - Go to Cloudflare Dashboard → **Add a Site**
+   - Enter: `ai-vibez.com`
+   - Follow nameserver setup instructions
+
+2. **DNS Configuration** (after domain is active):
+   - The Workers route will automatically handle `ai-vibez.com/*`
+   - No additional DNS records needed for the app
+
+3. **SSL Certificate**: Cloudflare will automatically provision SSL
+
+---
+
 ## 📝 CHECKLIST
 
-- [ ] D1 Database ID copied to `wrangler.toml`
-- [ ] KV Namespace ID copied to `wrangler.toml`  
-- [ ] R2 Bucket created ✓
-- [ ] AI Gateway Token copied to `.dev.vars`
-- [ ] Google AI Studio API Key copied to `.dev.vars`
-- [ ] Google OAuth OR GitHub OAuth configured in `.dev.vars`
-- [ ] Security secrets generated and added to `.dev.vars`
-- [ ] Cloudflare API Token ready for deployment
+- [ ] **Domain**: ai-vibez.com added to Cloudflare account
+- [ ] **D1 Database**: ID copied to `wrangler.toml`
+- [ ] **KV Namespace**: ID copied to `wrangler.toml`  
+- [ ] **R2 Bucket**: ai-vibez-r2 created ✓
+- [ ] **AI Gateway**: Token copied to `.dev.vars`
+- [ ] **Google AI Studio**: API Key copied to `.dev.vars`
+- [ ] **OAuth Login**: Google OR GitHub configured in `.dev.vars` (with ai-vibez.com URLs)
+- [ ] **Security Secrets**: Generated and added to `.dev.vars`
+- [ ] **Cloudflare API Token**: Ready for deployment
 
-**Come back when you have everything and I'll deploy it! 🚀**
+**Your app will be live at: https://ai-vibez.com** 🚀
