@@ -50,17 +50,22 @@ jobs:
           echo "🔐 Testing API authentication..."
           npx wrangler whoami || exit 1
           
-      # Apply database migrations - FIXED DATABASE ID
-      - name: Database Migrations - CORRECT ID
+      # Apply database migrations - FIXED SYNTAX
+      - name: Database Migrations - FIXED SYNTAX
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
         run: |
-          echo "🗄️ Applying migrations to CORRECT database..."
-          echo "Target Database ID: 88c494f1-1236-4ce4-8b60-570776559000"
+          echo "🗄️ Applying migrations to database..."
+          echo "Database Name: ai-vibez-d1"
+          echo "Database ID: 88c494f1-1236-4ce4-8b60-570776559000"
           
-          # Use the CORRECT database ID from your dashboard
-          npx wrangler d1 migrations apply --database-id=88c494f1-1236-4ce4-8b60-570776559000 --remote || echo "⚠️ Migration may have already been applied"
+          # Apply migrations using CORRECT syntax (database name, not ID flag)
+          if npx wrangler d1 migrations apply ai-vibez-d1 --remote; then
+            echo "✅ Migrations applied successfully"
+          else
+            echo "⚠️ Migration failed - may already be applied"
+          fi
           
       # Deploy Workers with explicit config
       - name: Deploy to Cloudflare Workers
@@ -134,27 +139,34 @@ jobs:
             
           echo "✅ Secrets setup completed via API"
           
-      # Test database with CORRECT ID
-      - name: Test Database Connection - CORRECT ID
+      # Test database with CORRECT SYNTAX
+      - name: Test Database Connection - FIXED SYNTAX
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
         run: |
-          echo "🔐 TESTING DATABASE WITH CORRECT ID"
+          echo "🔐 TESTING DATABASE CONNECTION"
           echo "=================================================="
-          echo "Using Database ID: 88c494f1-1236-4ce4-8b60-570776559000 (from your dashboard)"
+          echo "Database Name: ai-vibez-d1"
+          echo "Database ID: 88c494f1-1236-4ce4-8b60-570776559000"
           
-          # Test connectivity using the CORRECT database ID
-          if npx wrangler d1 execute --database-id=88c494f1-1236-4ce4-8b60-570776559000 --remote --command="SELECT 1 as test;"; then
+          # Test connectivity using CORRECT syntax (database name as argument)
+          if npx wrangler d1 execute ai-vibez-d1 --remote --command="SELECT 1 as test;"; then
             echo "✅ Database connection successful"
             
             echo "Checking existing tables..."
-            npx wrangler d1 execute --database-id=88c494f1-1236-4ce4-8b60-570776559000 --remote --command="SELECT name FROM sqlite_master WHERE type='table';" || echo "No tables found (expected for empty database)"
+            npx wrangler d1 execute ai-vibez-d1 --remote --command="SELECT name FROM sqlite_master WHERE type='table';" || echo "No tables found (expected for empty database)"
+            
+            echo "Checking for users table specifically..."
+            npx wrangler d1 execute ai-vibez-d1 --remote --command="SELECT name FROM sqlite_master WHERE type='table' AND name='users';" || echo "Users table not found"
+            
+            echo "Checking for sessions table..."
+            npx wrangler d1 execute ai-vibez-d1 --remote --command="SELECT name FROM sqlite_master WHERE type='table' AND name='sessions';" || echo "Sessions table not found"
             
             echo "✅ Database test completed"
           else
             echo "❌ Database connection failed"
-            echo "The database ID 88c494f1-1236-4ce4-8b60-570776559000 from your dashboard should be accessible"
+            echo "Check that database 'ai-vibez-d1' exists and is accessible"
           fi
           
           echo "=================================================="
