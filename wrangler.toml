@@ -54,10 +54,18 @@ binding = "ASSETS"
 directory = "dist"
 
 [vars]
+# Application Configuration
 TEMPLATES_REPOSITORY = "https://github.com/Carter-75/ai-vibez"
-ALLOWED_EMAIL = "cartermoyer75@gmail.com"
-ENABLE_EMAIL_WHITELIST = "false"
-DISABLE_EMAIL_AUTH = "false"
 CLOUDFLARE_AI_GATEWAY = "ai-vibez-gateway"
 MAX_SANDBOX_INSTANCES = "10"
 SANDBOX_INSTANCE_TYPE = "standard"
+
+# Authentication Configuration - LOGIN IS REQUIRED!
+ENABLE_EMAIL_WHITELIST = "false"  # Set to "true" to restrict access to specific emails
+DISABLE_EMAIL_AUTH = "false"      # Keep false - provides email/password backup login
+ALLOWED_EMAIL = "cartermoyer75@gmail.com"  # Admin email address
+REQUIRE_AUTHENTICATION = "true"   # Users MUST log in to use the app
+
+# Security Settings
+ENVIRONMENT = "production"
+SESSION_TIMEOUT_HOURS = "24"      # How long users stay logged in
