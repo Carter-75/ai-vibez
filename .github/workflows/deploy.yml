@@ -50,6 +50,9 @@ jobs:
           echo "🔐 Testing API authentication..."
           npx wrangler whoami || exit 1
           
+          echo "📋 Listing all D1 databases..."
+          npx wrangler d1 list
+          
       # Apply database migrations - FIXED SYNTAX
       - name: Database Migrations - FIXED SYNTAX
         env:
@@ -81,96 +84,104 @@ jobs:
           # Deploy with explicit Workers configuration
           CLOUDFLARE_PAGES_PROJECT="" npx wrangler deploy --config wrangler.toml --compatibility-date 2024-10-02
           
-      # MANUAL SECRET SETUP - Bypass Pages detection
-      - name: Manual Workers Secrets Setup
+      # SIMPLIFIED SECRET SETUP - Use wrangler (should work now)
+      - name: Setup Workers Secrets - FIXED
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
         run: |
-          echo "🔑 Setting up secrets via API calls (bypassing wrangler detection)..."
+          echo "🔑 Setting up secrets using wrangler (Pages detection fixed)..."
           
-          # Get worker subdomain for API calls
-          ACCOUNT_ID="${{ secrets.CLOUDFLARE_ACCOUNT_ID }}"
-          API_TOKEN="${{ secrets.CLOUDFLARE_API_TOKEN }}"
-          WORKER_NAME="ai-vibez"
+          # Force clean environment
+          rm -rf dist/_routes.json dist/functions dist/pages 2>/dev/null || true
           
-          # Set secrets via direct API calls instead of wrangler commands
-          echo "Setting GOOGLE_CLIENT_ID via API..."
-          curl -X PUT "https://api.cloudflare.com/client/v4/accounts/${ACCOUNT_ID}/workers/scripts/${WORKER_NAME}/secrets" \
-            -H "Authorization: Bearer ${API_TOKEN}" \
-            -H "Content-Type: application/json" \
-            -d '{"GOOGLE_CLIENT_ID": "${{ secrets.GOOGLE_CLIENT_ID }}"}' || echo "Failed to set GOOGLE_CLIENT_ID"
-            
-          echo "Setting GOOGLE_CLIENT_SECRET via API..."
-          curl -X PUT "https://api.cloudflare.com/client/v4/accounts/${ACCOUNT_ID}/workers/scripts/${WORKER_NAME}/secrets" \
-            -H "Authorization: Bearer ${API_TOKEN}" \
-            -H "Content-Type: application/json" \
-            -d '{"GOOGLE_CLIENT_SECRET": "${{ secrets.GOOGLE_CLIENT_SECRET }}"}' || echo "Failed to set GOOGLE_CLIENT_SECRET"
-            
-          echo "Setting JWT_SECRET via API..."
-          curl -X PUT "https://api.cloudflare.com/client/v4/accounts/${ACCOUNT_ID}/workers/scripts/${WORKER_NAME}/secrets" \
-            -H "Authorization: Bearer ${API_TOKEN}" \
-            -H "Content-Type: application/json" \
-            -d '{"JWT_SECRET": "${{ secrets.JWT_SECRET }}"}' || echo "Failed to set JWT_SECRET"
-            
-          echo "Setting GOOGLE_AI_STUDIO_API_KEY via API..."
-          curl -X PUT "https://api.cloudflare.com/client/v4/accounts/${ACCOUNT_ID}/workers/scripts/${WORKER_NAME}/secrets" \
-            -H "Authorization: Bearer ${API_TOKEN}" \
-            -H "Content-Type: application/json" \
-            -d '{"GOOGLE_AI_STUDIO_API_KEY": "${{ secrets.GOOGLE_AI_STUDIO_API_KEY }}"}' || echo "Failed to set GOOGLE_AI_STUDIO_API_KEY"
-            
-          echo "Setting CLOUDFLARE_AI_GATEWAY_TOKEN via API..."
-          curl -X PUT "https://api.cloudflare.com/client/v4/accounts/${ACCOUNT_ID}/workers/scripts/${WORKER_NAME}/secrets" \
-            -H "Authorization: Bearer ${API_TOKEN}" \
-            -H "Content-Type: application/json" \
-            -d '{"CLOUDFLARE_AI_GATEWAY_TOKEN": "${{ secrets.CLOUDFLARE_AI_GATEWAY_TOKEN }}"}' || echo "Failed to set CLOUDFLARE_AI_GATEWAY_TOKEN"
-            
-          echo "Setting SECRETS_ENCRYPTION_KEY via API..."
-          curl -X PUT "https://api.cloudflare.com/client/v4/accounts/${ACCOUNT_ID}/workers/scripts/${WORKER_NAME}/secrets" \
-            -H "Authorization: Bearer ${API_TOKEN}" \
-            -H "Content-Type: application/json" \
-            -d '{"SECRETS_ENCRYPTION_KEY": "${{ secrets.SECRETS_ENCRYPTION_KEY }}"}' || echo "Failed to set SECRETS_ENCRYPTION_KEY"
-            
-          echo "Setting WEBHOOK_SECRET via API..."
-          curl -X PUT "https://api.cloudflare.com/client/v4/accounts/${ACCOUNT_ID}/workers/scripts/${WORKER_NAME}/secrets" \
-            -H "Authorization: Bearer ${API_TOKEN}" \
-            -H "Content-Type: application/json" \
-            -d '{"WEBHOOK_SECRET": "${{ secrets.WEBHOOK_SECRET }}"}' || echo "Failed to set WEBHOOK_SECRET"
-            
-          echo "✅ Secrets setup completed via API"
+          # Set secrets using wrangler (should work now that Pages detection is fixed)
+          echo "Setting GOOGLE_CLIENT_ID..."
+          echo "${{ secrets.GOOGLE_CLIENT_ID }}" | npx wrangler secret put GOOGLE_CLIENT_ID --name ai-vibez || echo "⚠️ Failed to set GOOGLE_CLIENT_ID"
           
-      # Test database with CORRECT SYNTAX
-      - name: Test Database Connection - FIXED SYNTAX
+          echo "Setting GOOGLE_CLIENT_SECRET..."
+          echo "${{ secrets.GOOGLE_CLIENT_SECRET }}" | npx wrangler secret put GOOGLE_CLIENT_SECRET --name ai-vibez || echo "⚠️ Failed to set GOOGLE_CLIENT_SECRET"
+          
+          echo "Setting JWT_SECRET..."
+          echo "${{ secrets.JWT_SECRET }}" | npx wrangler secret put JWT_SECRET --name ai-vibez || echo "⚠️ Failed to set JWT_SECRET"
+          
+          echo "Setting GOOGLE_AI_STUDIO_API_KEY..."
+          echo "${{ secrets.GOOGLE_AI_STUDIO_API_KEY }}" | npx wrangler secret put GOOGLE_AI_STUDIO_API_KEY --name ai-vibez || echo "⚠️ Failed to set GOOGLE_AI_STUDIO_API_KEY"
+          
+          echo "Setting CLOUDFLARE_AI_GATEWAY_TOKEN..."
+          echo "${{ secrets.CLOUDFLARE_AI_GATEWAY_TOKEN }}" | npx wrangler secret put CLOUDFLARE_AI_GATEWAY_TOKEN --name ai-vibez || echo "⚠️ Failed to set CLOUDFLARE_AI_GATEWAY_TOKEN"
+          
+          echo "Setting SECRETS_ENCRYPTION_KEY..."
+          echo "${{ secrets.SECRETS_ENCRYPTION_KEY }}" | npx wrangler secret put SECRETS_ENCRYPTION_KEY --name ai-vibez || echo "⚠️ Failed to set SECRETS_ENCRYPTION_KEY"
+          
+          echo "Setting WEBHOOK_SECRET..."
+          echo "${{ secrets.WEBHOOK_SECRET }}" | npx wrangler secret put WEBHOOK_SECRET --name ai-vibez || echo "⚠️ Failed to set WEBHOOK_SECRET"
+          
+          echo "✅ Secrets setup completed"
+          
+      # Comprehensive database and API diagnostics
+      - name: Database and API Diagnostics - COMPREHENSIVE
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
         run: |
-          echo "🔐 TESTING DATABASE CONNECTION"
-          echo "=================================================="
-          echo "Database Name: ai-vibez-d1"
-          echo "Database ID: 88c494f1-1236-4ce4-8b60-570776559000"
+          echo "🔍 COMPREHENSIVE DIAGNOSTICS"
+          echo "============================================="
+          echo "Target Database ID: 88c494f1-1236-4ce4-8b60-570776559000"
+          echo "Target Database Name: ai-vibez-d1"
+          echo ""
           
-          # Test connectivity using CORRECT syntax (database name as argument)
-          if npx wrangler d1 execute ai-vibez-d1 --remote --command="SELECT 1 as test;"; then
-            echo "✅ Database connection successful"
-            
-            echo "Checking existing tables..."
-            npx wrangler d1 execute ai-vibez-d1 --remote --command="SELECT name FROM sqlite_master WHERE type='table';" || echo "No tables found (expected for empty database)"
-            
-            echo "Checking for users table specifically..."
-            npx wrangler d1 execute ai-vibez-d1 --remote --command="SELECT name FROM sqlite_master WHERE type='table' AND name='users';" || echo "Users table not found"
-            
-            echo "Checking for sessions table..."
-            npx wrangler d1 execute ai-vibez-d1 --remote --command="SELECT name FROM sqlite_master WHERE type='table' AND name='sessions';" || echo "Sessions table not found"
-            
-            echo "✅ Database test completed"
+          # 1. Test API token permissions
+          echo "🔐 Testing API token permissions..."
+          npx wrangler whoami || echo "❌ API authentication failed"
+          echo ""
+          
+          # 2. List all D1 databases to verify existence
+          echo "📋 Listing all D1 databases..."
+          npx wrangler d1 list || echo "❌ Cannot list D1 databases"
+          echo ""
+          
+          # 3. Check if the specific database exists
+          echo "🎯 Checking if our database exists..."
+          if npx wrangler d1 list | grep -q "88c494f1-1236-4ce4-8b60-570776559000"; then
+            echo "✅ Database 88c494f1-1236-4ce4-8b60-570776559000 exists in account"
           else
-            echo "❌ Database connection failed"
-            echo "Check that database 'ai-vibez-d1' exists and is accessible"
+            echo "❌ Database 88c494f1-1236-4ce4-8b60-570776559000 NOT found in account"
+            echo "Available databases:"
+            npx wrangler d1 list | grep -E "(Name|ID)" || echo "No databases found"
+          fi
+          echo ""
+          
+          # 4. Test database connection by name
+          echo "🔌 Testing database connection by name (ai-vibez-d1)..."
+          if npx wrangler d1 execute ai-vibez-d1 --remote --command="SELECT 1 as test;"; then
+            echo "✅ Database connection by name successful"
+            
+            echo "📊 Checking database schema..."
+            npx wrangler d1 execute ai-vibez-d1 --remote --command="SELECT name FROM sqlite_master WHERE type='table';" || echo "No tables found"
+            
+            echo "✅ Database diagnostics completed successfully"
+          else
+            echo "❌ Database connection by name failed"
+            
+            # 5. Try alternative connection methods
+            echo "🔄 Trying database connection by ID..."
+            if curl -s -X POST "https://api.cloudflare.com/client/v4/accounts/${{ secrets.CLOUDFLARE_ACCOUNT_ID }}/d1/database/88c494f1-1236-4ce4-8b60-570776559000/query" \
+              -H "Authorization: Bearer ${{ secrets.CLOUDFLARE_API_TOKEN }}" \
+              -H "Content-Type: application/json" \
+              -d '{"sql": "SELECT 1 as test"}' | grep -q '"success":true'; then
+              echo "✅ Database connection via API successful"
+            else
+              echo "❌ Database connection via API also failed"
+              echo "Possible issues:"
+              echo "1. Database doesn't exist with ID 88c494f1-1236-4ce4-8b60-570776559000"
+              echo "2. API token lacks D1 permissions"
+              echo "3. Database is in wrong account"
+            fi
           fi
           
-          echo "=================================================="
+          echo "============================================="
           echo "🎉 DEPLOYMENT COMPLETED!"
           echo "🌐 Visit: https://ai-vibez.com"
-          echo "🔐 Database ready for login functionality"
-          echo "=================================================="
+          echo "📋 Check diagnostics above for any issues"
+          echo "============================================="
