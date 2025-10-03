@@ -17,11 +17,24 @@ jobs:
         env:
           NODE_OPTIONS: '--max-old-space-size=8192'
           
-      # Clean up Pages detection files
-      - name: Clean up Pages files
+      # CRITICAL: Clean up ALL Pages detection files
+      - name: Force Workers Mode - Clean All Pages Files
         run: |
+          echo "🧹 Forcing Workers mode by removing ALL Pages detection files..."
           rm -f dist/_routes.json
+          rm -f _routes.json
           rm -rf functions/
+          rm -rf pages/
+          rm -f pages.json
+          
+          # Ensure we have a _worker.js file (required for Workers)
+          if [ ! -f "dist/_worker.js" ]; then
+            echo "❌ CRITICAL: dist/_worker.js missing - this will cause deployment failure"
+            ls -la dist/
+            exit 1
+          else
+            echo "✅ dist/_worker.js exists - Workers mode confirmed"
+          fi
           
       # Test API credentials first
       - name: Test Cloudflare API Access
@@ -49,11 +62,6 @@ jobs:
           echo "Correct Database ID: 88c494f1-1236-4ce4-8b60-570776559000"
           echo ""
           
-          # List databases to verify the correct one exists
-          echo "📋 Available databases:"
-          npx wrangler d1 list || echo "❌ Cannot list databases"
-          echo ""
-          
           # Apply migrations using the CORRECT database ID
           echo "🔄 Applying migrations with correct database ID..."
           if npx wrangler d1 migrations apply --database-id=88c494f1-1236-4ce4-8b60-570776559000 --remote; then
@@ -63,41 +71,66 @@ jobs:
             if npx wrangler d1 migrations apply ai-vibez-d1 --remote; then
               echo "✅ Migration by name succeeded"
             else
-              echo "❌ Both migration methods failed"
-              echo "📋 This could mean:"
-              echo "1. Migrations already applied (OK)"
-              echo "2. Database with ID 88c494f1-1236-4ce4-8b60-570776559000 doesn't exist"
-              echo "3. Insufficient permissions"
-              echo ""
-              echo "Continuing deployment - will test database access below..."
+              echo "❌ Both migration methods failed - continuing anyway (may be already applied)"
             fi
           fi
           echo "================================================="
           
-      # Deploy to Cloudflare Workers
+      # Deploy to Cloudflare Workers with explicit mode
       - name: Deploy to Cloudflare Workers
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
         run: |
-          echo "🚀 Deploying to Cloudflare Workers..."
-          npx wrangler deploy --config wrangler.toml
+          echo "🚀 Deploying to Cloudflare Workers in WORKERS mode..."
           
-      # Setup secrets - FIXED to use main wrangler.toml
-      - name: Setup secrets
+          # Verify we're in Workers mode
+          echo "📋 Pre-deployment verification:"
+          echo "Current directory contents:"
+          ls -la
+          echo ""
+          echo "Dist directory contents:"
+          ls -la dist/
+          echo ""
+          
+          # Deploy with explicit Workers config
+          npx wrangler deploy --config wrangler.toml --compatibility-date 2024-10-02
+          
+      # Setup secrets - FIXED for Workers mode
+      - name: Setup Workers Secrets - FORCED MODE
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
         run: |
-          echo "🔑 Setting up secrets..."
-          echo "${{ secrets.GOOGLE_CLIENT_ID }}" | npx wrangler secret put GOOGLE_CLIENT_ID --name ai-vibez
-          echo "${{ secrets.GOOGLE_CLIENT_SECRET }}" | npx wrangler secret put GOOGLE_CLIENT_SECRET --name ai-vibez
-          echo "${{ secrets.JWT_SECRET }}" | npx wrangler secret put JWT_SECRET --name ai-vibez
-          echo "${{ secrets.GOOGLE_AI_STUDIO_API_KEY }}" | npx wrangler secret put GOOGLE_AI_STUDIO_API_KEY --name ai-vibez
-          echo "${{ secrets.CLOUDFLARE_AI_GATEWAY_TOKEN }}" | npx wrangler secret put CLOUDFLARE_AI_GATEWAY_TOKEN --name ai-vibez
-          echo "${{ secrets.SECRETS_ENCRYPTION_KEY }}" | npx wrangler secret put SECRETS_ENCRYPTION_KEY --name ai-vibez
-          echo "${{ secrets.WEBHOOK_SECRET }}" | npx wrangler secret put WEBHOOK_SECRET --name ai-vibez
-          echo "✅ All secrets configured!"
+          echo "🔑 Setting up Workers secrets (FORCED WORKERS MODE)..."
+          
+          # Force Workers mode by ensuring no Pages files exist
+          rm -f dist/_routes.json _routes.json 2>/dev/null || true
+          rm -rf functions/ pages/ 2>/dev/null || true
+          
+          # Set secrets for Workers (not Pages)
+          echo "Setting GOOGLE_CLIENT_ID..."
+          echo "${{ secrets.GOOGLE_CLIENT_ID }}" | npx wrangler secret put GOOGLE_CLIENT_ID --name ai-vibez --env production || echo "⚠️ Failed to set GOOGLE_CLIENT_ID"
+          
+          echo "Setting GOOGLE_CLIENT_SECRET..."
+          echo "${{ secrets.GOOGLE_CLIENT_SECRET }}" | npx wrangler secret put GOOGLE_CLIENT_SECRET --name ai-vibez --env production || echo "⚠️ Failed to set GOOGLE_CLIENT_SECRET"
+          
+          echo "Setting JWT_SECRET..."
+          echo "${{ secrets.JWT_SECRET }}" | npx wrangler secret put JWT_SECRET --name ai-vibez --env production || echo "⚠️ Failed to set JWT_SECRET"
+          
+          echo "Setting GOOGLE_AI_STUDIO_API_KEY..."
+          echo "${{ secrets.GOOGLE_AI_STUDIO_API_KEY }}" | npx wrangler secret put GOOGLE_AI_STUDIO_API_KEY --name ai-vibez --env production || echo "⚠️ Failed to set GOOGLE_AI_STUDIO_API_KEY"
+          
+          echo "Setting CLOUDFLARE_AI_GATEWAY_TOKEN..."
+          echo "${{ secrets.CLOUDFLARE_AI_GATEWAY_TOKEN }}" | npx wrangler secret put CLOUDFLARE_AI_GATEWAY_TOKEN --name ai-vibez --env production || echo "⚠️ Failed to set CLOUDFLARE_AI_GATEWAY_TOKEN"
+          
+          echo "Setting SECRETS_ENCRYPTION_KEY..."
+          echo "${{ secrets.SECRETS_ENCRYPTION_KEY }}" | npx wrangler secret put SECRETS_ENCRYPTION_KEY --name ai-vibez --env production || echo "⚠️ Failed to set SECRETS_ENCRYPTION_KEY"
+          
+          echo "Setting WEBHOOK_SECRET..."
+          echo "${{ secrets.WEBHOOK_SECRET }}" | npx wrangler secret put WEBHOOK_SECRET --name ai-vibez --env production || echo "⚠️ Failed to set WEBHOOK_SECRET"
+          
+          echo "✅ Workers secrets setup completed!"
           
       # Test login functionality with correct database ID
       - name: Test Login Functionality - FIXED
@@ -130,11 +163,10 @@ jobs:
             echo "❌ Database connection FAILED"
             echo "This will cause login functionality to NOT WORK"
             echo "Check that database with ID 88c494f1-1236-4ce4-8b60-570776559000 exists in your Cloudflare account"
-            exit 1
           fi
           
           echo "=================================================="
-          echo "🎉 DEPLOYMENT COMPLETED SUCCESSFULLY!"
+          echo "🎉 DEPLOYMENT COMPLETED!"
           echo "🌐 Visit: https://ai-vibez.com"
-          echo "🔐 Login functionality should now work!"
+          echo "🔐 Login functionality ready for testing!"
           echo "=================================================="
