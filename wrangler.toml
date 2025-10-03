@@ -46,7 +46,7 @@ bucket_name = "ai-vibez-r2"
 
 [[kv_namespaces]]
 binding = "VibecoderStore"
-id = "REPLACE_WITH_YOUR_KV_NAMESPACE_ID"
+id = "417f64e4855747e1a7b5e9249e0f34c5"
 
 # Static assets binding for serving frontend files
 [assets]
