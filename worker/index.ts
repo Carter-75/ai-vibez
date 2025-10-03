@@ -97,14 +97,44 @@ const worker = {
 
 		// Route 1: Main Platform Request (e.g., build.cloudflare.dev or localhost)
 		if (isMainDomainRequest) {
-			// Serve static assets for all non-API routes from the ASSETS binding.
-			if (!pathname.startsWith('/api/')) {
-				return env.ASSETS.fetch(request);
-			}
 			// Handle all API requests with the main Hono application.
-			logger.info(`Handling API request for: ${url}`);
-			const app = createApp(env);
-			return app.fetch(request, env, ctx);
+			if (pathname.startsWith('/api/')) {
+				logger.info(`Handling API request for: ${url}`);
+				const app = createApp(env);
+				return app.fetch(request, env, ctx);
+			}
+			
+			// Serve static assets for non-API routes from the ASSETS binding.
+			// For SPA routing, if a static asset is not found, serve index.html
+			// to allow React Router to handle client-side routing.
+			try {
+				const assetResponse = await env.ASSETS.fetch(request);
+				
+				// If the asset exists (status 200), return it
+				if (assetResponse.status === 200) {
+					return assetResponse;
+				}
+				
+				// If the asset doesn't exist (404) and it's not a file extension request,
+				// serve index.html to allow SPA routing
+				const hasFileExtension = /\.[a-zA-Z0-9]+$/.test(pathname);
+				if (assetResponse.status === 404 && !hasFileExtension) {
+					// Create a new request for index.html
+					const indexUrl = new URL(request.url);
+					indexUrl.pathname = '/index.html';
+					const indexRequest = new Request(indexUrl.toString(), {
+						method: request.method,
+						headers: request.headers,
+					});
+					return env.ASSETS.fetch(indexRequest);
+				}
+				
+				// For other cases (like missing files with extensions), return the original response
+				return assetResponse;
+			} catch (error) {
+				logger.error(`Error serving static asset for ${pathname}:`, error);
+				return new Response('Internal Server Error', { status: 500 });
+			}
 		}
 
 		// Route 2: User App Request (e.g., xyz.build.cloudflare.dev or test.localhost)
