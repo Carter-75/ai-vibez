@@ -1,4 +1,4 @@
-name: Deploy AI Vibez - FULLY WORKING
+name: Deploy AI Vibez - WORKERS SECRETS FIX
 
 on:
   push:
@@ -31,7 +31,7 @@ jobs:
         run: |
           npx wrangler d1 migrations apply ai-vibez-d1 --remote || echo "Migration failed"
           
-      # Deploy (already working!)
+      # Deploy with full assets config
       - name: Deploy to Cloudflare Workers
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
@@ -39,25 +39,25 @@ jobs:
         run: |
           npx wrangler deploy --config wrangler.toml
           
-      # Fixed secrets - force Workers mode
+      # Setup secrets using Workers-only config
       - name: Setup secrets
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
         run: |
-          echo "🔑 Setting up Workers secrets..."
-          echo "${{ secrets.GOOGLE_CLIENT_ID }}" | npx wrangler secret put GOOGLE_CLIENT_ID --name ai-vibez --force
-          echo "${{ secrets.GOOGLE_CLIENT_SECRET }}" | npx wrangler secret put GOOGLE_CLIENT_SECRET --name ai-vibez --force
-          echo "${{ secrets.JWT_SECRET }}" | npx wrangler secret put JWT_SECRET --name ai-vibez --force
-          echo "${{ secrets.GOOGLE_AI_STUDIO_API_KEY }}" | npx wrangler secret put GOOGLE_AI_STUDIO_API_KEY --name ai-vibez --force
-          echo "${{ secrets.CLOUDFLARE_AI_GATEWAY_TOKEN }}" | npx wrangler secret put CLOUDFLARE_AI_GATEWAY_TOKEN --name ai-vibez --force
-          echo "${{ secrets.SECRETS_ENCRYPTION_KEY }}" | npx wrangler secret put SECRETS_ENCRYPTION_KEY --name ai-vibez --force
-          echo "${{ secrets.WEBHOOK_SECRET }}" | npx wrangler secret put WEBHOOK_SECRET --name ai-vibez --force
+          echo "🔑 Setting up secrets using Workers-only config..."
+          echo "${{ secrets.GOOGLE_CLIENT_ID }}" | npx wrangler secret put GOOGLE_CLIENT_ID --name ai-vibez --config wrangler.secrets.toml
+          echo "${{ secrets.GOOGLE_CLIENT_SECRET }}" | npx wrangler secret put GOOGLE_CLIENT_SECRET --name ai-vibez --config wrangler.secrets.toml
+          echo "${{ secrets.JWT_SECRET }}" | npx wrangler secret put JWT_SECRET --name ai-vibez --config wrangler.secrets.toml
+          echo "${{ secrets.GOOGLE_AI_STUDIO_API_KEY }}" | npx wrangler secret put GOOGLE_AI_STUDIO_API_KEY --name ai-vibez --config wrangler.secrets.toml
+          echo "${{ secrets.CLOUDFLARE_AI_GATEWAY_TOKEN }}" | npx wrangler secret put CLOUDFLARE_AI_GATEWAY_TOKEN --name ai-vibez --config wrangler.secrets.toml
+          echo "${{ secrets.SECRETS_ENCRYPTION_KEY }}" | npx wrangler secret put SECRETS_ENCRYPTION_KEY --name ai-vibez --config wrangler.secrets.toml
+          echo "${{ secrets.WEBHOOK_SECRET }}" | npx wrangler secret put WEBHOOK_SECRET --name ai-vibez --config wrangler.secrets.toml
           echo "✅ All secrets configured"
           
-      # Test deployment
-      - name: Verify deployment
+      # Success message
+      - name: Deployment complete
         run: |
-          echo "🌐 Your AI Vibez app is live at:"
-          echo "✅ https://ai-vibez.com"
-          echo "✅ https://www.ai-vibez.com"
+          echo "🎉 AI Vibez successfully deployed!"
+          echo "🌐 Visit: https://ai-vibez.com"
+          echo "🔐 OAuth login should be working"
