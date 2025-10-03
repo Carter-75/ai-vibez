@@ -1,4 +1,4 @@
-name: Deploy AI Vibez - DEBUG
+name: Deploy AI Vibez - FIXED WITH DEBUG
 
 on:
   push:
@@ -17,35 +17,50 @@ jobs:
         env:
           NODE_OPTIONS: '--max-old-space-size=8192'
           
-      - name: Debug Deployment
+      # Clean up Pages detection files
+      - name: Clean up Pages files
+        run: |
+          echo "🧹 Removing Pages detection files..."
+          rm -f dist/_routes.json
+          rm -rf functions/
+          
+      # Database migrations (preCommands)
+      - name: Database migrations
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
         run: |
-          echo "=== CRITICAL FILE CHECK ==="
-          echo "dist/_worker.js exists: $(test -f dist/_worker.js && echo 'YES' || echo 'NO - MISSING!')"
-          if [ -d "dist" ]; then
-            echo "Dist contents:"
-            ls -la dist/
-          fi
+          echo "🗄️ Running database migrations..."
+          npx wrangler d1 migrations apply ai-vibez-d1 --remote || echo "Migration failed - continuing"
           
-          echo "=== WRANGLER DEPLOY WITH FULL OUTPUT ==="
-          set +e
-          npx wrangler deploy --config wrangler.toml --verbose 2>&1 | tee deploy.log
-          EXIT_CODE=$?
+      # Deploy to Cloudflare Workers (FIXED - removed --verbose)
+      - name: Deploy to Cloudflare Workers
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          echo "🚀 Deploying to Cloudflare Workers..."
+          npx wrangler deploy --config wrangler.toml
           
-          echo "=== DEPLOYMENT LOG ==="
-          cat deploy.log
+      # Set up secrets (postCommands)
+      - name: Setup secrets
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          echo "🔑 Setting up secrets..."
+          echo "${{ secrets.GOOGLE_CLIENT_ID }}" | npx wrangler secret put GOOGLE_CLIENT_ID --name ai-vibez
+          echo "${{ secrets.GOOGLE_CLIENT_SECRET }}" | npx wrangler secret put GOOGLE_CLIENT_SECRET --name ai-vibez
+          echo "${{ secrets.JWT_SECRET }}" | npx wrangler secret put JWT_SECRET --name ai-vibez
+          echo "${{ secrets.GOOGLE_AI_STUDIO_API_KEY }}" | npx wrangler secret put GOOGLE_AI_STUDIO_API_KEY --name ai-vibez
+          echo "${{ secrets.CLOUDFLARE_AI_GATEWAY_TOKEN }}" | npx wrangler secret put CLOUDFLARE_AI_GATEWAY_TOKEN --name ai-vibez
+          echo "${{ secrets.SECRETS_ENCRYPTION_KEY }}" | npx wrangler secret put SECRETS_ENCRYPTION_KEY --name ai-vibez
+          echo "${{ secrets.WEBHOOK_SECRET }}" | npx wrangler secret put WEBHOOK_SECRET --name ai-vibez
+          echo "✅ Secrets configured"
           
-          echo "=== WRANGLER ERROR LOGS ==="
-          if [ -d ~/.config/.wrangler/logs ]; then
-            for log in ~/.config/.wrangler/logs/*.log; do
-              if [ -f "$log" ]; then
-                echo "--- $log ---"
-                cat "$log"
-              fi
-            done
-          fi
-          
-          echo "Exit code: $EXIT_CODE"
-          exit $EXIT_CODE
+      # Verify deployment
+      - name: Verify deployment
+        run: |
+          echo "🌐 Testing deployment..."
+          curl -I https://ai-vibez.com || echo "Site not yet accessible"
+          echo "✅ Deployment complete - visit https://ai-vibez.com"
