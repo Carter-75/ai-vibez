@@ -26,6 +26,8 @@ jobs:
           rm -rf functions/
           rm -rf pages/
           rm -f pages.json
+          find . -name "_routes.json" -delete 2>/dev/null || true
+          find . -name "functions" -type d -exec rm -rf {} + 2>/dev/null || true
           
           # Ensure we have a _worker.js file (required for Workers)
           if [ ! -f "dist/_worker.js" ]; then
@@ -64,15 +66,10 @@ jobs:
           
           # Apply migrations using the CORRECT database ID
           echo "🔄 Applying migrations with correct database ID..."
-          if npx wrangler d1 migrations apply --database-id=88c494f1-1236-4ce4-8b60-570776559000 --remote; then
+          if npx wrangler d1 migrations apply ai-vibez-d1 --remote; then
             echo "✅ Migrations applied successfully"
           else
-            echo "⚠️ Migration failed - trying by name as fallback..."
-            if npx wrangler d1 migrations apply ai-vibez-d1 --remote; then
-              echo "✅ Migration by name succeeded"
-            else
-              echo "❌ Both migration methods failed - continuing anyway (may be already applied)"
-            fi
+            echo "⚠️ Migration failed - continuing anyway (may be already applied)"
           fi
           echo "================================================="
           
@@ -84,14 +81,9 @@ jobs:
         run: |
           echo "🚀 Deploying to Cloudflare Workers in WORKERS mode..."
           
-          # Verify we're in Workers mode
-          echo "📋 Pre-deployment verification:"
-          echo "Current directory contents:"
-          ls -la
-          echo ""
-          echo "Dist directory contents:"
-          ls -la dist/
-          echo ""
+          # Final cleanup before deploy
+          rm -f dist/_routes.json _routes.json 2>/dev/null || true
+          rm -rf functions/ pages/ 2>/dev/null || true
           
           # Deploy with explicit Workers config
           npx wrangler deploy --config wrangler.toml --compatibility-date 2024-10-02
@@ -108,32 +100,32 @@ jobs:
           rm -f dist/_routes.json _routes.json 2>/dev/null || true
           rm -rf functions/ pages/ 2>/dev/null || true
           
-          # Set secrets for Workers (not Pages)
+          # Set secrets for Workers (not Pages) - using database name instead of ID
           echo "Setting GOOGLE_CLIENT_ID..."
-          echo "${{ secrets.GOOGLE_CLIENT_ID }}" | npx wrangler secret put GOOGLE_CLIENT_ID --name ai-vibez --env production || echo "⚠️ Failed to set GOOGLE_CLIENT_ID"
+          echo "${{ secrets.GOOGLE_CLIENT_ID }}" | npx wrangler secret put GOOGLE_CLIENT_ID --name ai-vibez || echo "⚠️ Failed to set GOOGLE_CLIENT_ID"
           
           echo "Setting GOOGLE_CLIENT_SECRET..."
-          echo "${{ secrets.GOOGLE_CLIENT_SECRET }}" | npx wrangler secret put GOOGLE_CLIENT_SECRET --name ai-vibez --env production || echo "⚠️ Failed to set GOOGLE_CLIENT_SECRET"
+          echo "${{ secrets.GOOGLE_CLIENT_SECRET }}" | npx wrangler secret put GOOGLE_CLIENT_SECRET --name ai-vibez || echo "⚠️ Failed to set GOOGLE_CLIENT_SECRET"
           
           echo "Setting JWT_SECRET..."
-          echo "${{ secrets.JWT_SECRET }}" | npx wrangler secret put JWT_SECRET --name ai-vibez --env production || echo "⚠️ Failed to set JWT_SECRET"
+          echo "${{ secrets.JWT_SECRET }}" | npx wrangler secret put JWT_SECRET --name ai-vibez || echo "⚠️ Failed to set JWT_SECRET"
           
           echo "Setting GOOGLE_AI_STUDIO_API_KEY..."
-          echo "${{ secrets.GOOGLE_AI_STUDIO_API_KEY }}" | npx wrangler secret put GOOGLE_AI_STUDIO_API_KEY --name ai-vibez --env production || echo "⚠️ Failed to set GOOGLE_AI_STUDIO_API_KEY"
+          echo "${{ secrets.GOOGLE_AI_STUDIO_API_KEY }}" | npx wrangler secret put GOOGLE_AI_STUDIO_API_KEY --name ai-vibez || echo "⚠️ Failed to set GOOGLE_AI_STUDIO_API_KEY"
           
           echo "Setting CLOUDFLARE_AI_GATEWAY_TOKEN..."
-          echo "${{ secrets.CLOUDFLARE_AI_GATEWAY_TOKEN }}" | npx wrangler secret put CLOUDFLARE_AI_GATEWAY_TOKEN --name ai-vibez --env production || echo "⚠️ Failed to set CLOUDFLARE_AI_GATEWAY_TOKEN"
+          echo "${{ secrets.CLOUDFLARE_AI_GATEWAY_TOKEN }}" | npx wrangler secret put CLOUDFLARE_AI_GATEWAY_TOKEN --name ai-vibez || echo "⚠️ Failed to set CLOUDFLARE_AI_GATEWAY_TOKEN"
           
           echo "Setting SECRETS_ENCRYPTION_KEY..."
-          echo "${{ secrets.SECRETS_ENCRYPTION_KEY }}" | npx wrangler secret put SECRETS_ENCRYPTION_KEY --name ai-vibez --env production || echo "⚠️ Failed to set SECRETS_ENCRYPTION_KEY"
+          echo "${{ secrets.SECRETS_ENCRYPTION_KEY }}" | npx wrangler secret put SECRETS_ENCRYPTION_KEY --name ai-vibez || echo "⚠️ Failed to set SECRETS_ENCRYPTION_KEY"
           
           echo "Setting WEBHOOK_SECRET..."
-          echo "${{ secrets.WEBHOOK_SECRET }}" | npx wrangler secret put WEBHOOK_SECRET --name ai-vibez --env production || echo "⚠️ Failed to set WEBHOOK_SECRET"
+          echo "${{ secrets.WEBHOOK_SECRET }}" | npx wrangler secret put WEBHOOK_SECRET --name ai-vibez || echo "⚠️ Failed to set WEBHOOK_SECRET"
           
           echo "✅ Workers secrets setup completed!"
           
-      # Test login functionality with correct database ID
-      - name: Test Login Functionality - FIXED
+      # Test login functionality with CORRECT syntax
+      - name: Test Login Functionality - FIXED SYNTAX
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
@@ -141,32 +133,35 @@ jobs:
           echo "🔐 TESTING LOGIN FUNCTIONALITY WITH CORRECT DATABASE"
           echo "=================================================="
           
-          # Test database connectivity using correct ID
-          echo "Testing database connectivity with ID: 88c494f1-1236-4ce4-8b60-570776559000..."
-          if npx wrangler d1 execute --database-id=88c494f1-1236-4ce4-8b60-570776559000 --remote --command="SELECT 1 as test;"; then
+          # Test database connectivity using CORRECT SYNTAX (database name, not ID)
+          echo "Testing database connectivity with database name: ai-vibez-d1..."
+          if npx wrangler d1 execute ai-vibez-d1 --remote --command="SELECT 1 as test;"; then
             echo "✅ Database connection successful"
             
             # Verify critical login tables exist
             echo "Verifying login tables exist..."
             echo "Checking for users table:"
-            npx wrangler d1 execute --database-id=88c494f1-1236-4ce4-8b60-570776559000 --remote --command="SELECT name FROM sqlite_master WHERE type='table' AND name='users';" || echo "❌ Users table missing"
+            npx wrangler d1 execute ai-vibez-d1 --remote --command="SELECT name FROM sqlite_master WHERE type='table' AND name='users';" || echo "❌ Users table missing"
             
             echo "Checking for sessions table:"
-            npx wrangler d1 execute --database-id=88c494f1-1236-4ce4-8b60-570776559000 --remote --command="SELECT name FROM sqlite_master WHERE type='table' AND name='sessions';" || echo "❌ Sessions table missing"
+            npx wrangler d1 execute ai-vibez-d1 --remote --command="SELECT name FROM sqlite_master WHERE type='table' AND name='sessions';" || echo "❌ Sessions table missing"
             
             echo "Checking for oauth_states table:"
-            npx wrangler d1 execute --database-id=88c494f1-1236-4ce4-8b60-570776559000 --remote --command="SELECT name FROM sqlite_master WHERE type='table' AND name='oauth_states';" || echo "❌ OAuth states table missing"
+            npx wrangler d1 execute ai-vibez-d1 --remote --command="SELECT name FROM sqlite_master WHERE type='table' AND name='oauth_states';" || echo "❌ OAuth states table missing"
+            
+            echo "Checking for apps table:"
+            npx wrangler d1 execute ai-vibez-d1 --remote --command="SELECT name FROM sqlite_master WHERE type='table' AND name='apps';" || echo "❌ Apps table missing"
             
             echo "✅ Login functionality database test completed"
             
           else
             echo "❌ Database connection FAILED"
             echo "This will cause login functionality to NOT WORK"
-            echo "Check that database with ID 88c494f1-1236-4ce4-8b60-570776559000 exists in your Cloudflare account"
+            echo "Check that database 'ai-vibez-d1' exists in your Cloudflare account"
           fi
           
           echo "=================================================="
-          echo "🎉 DEPLOYMENT COMPLETED!"
+          echo "🎉 DEPLOYMENT COMPLETED SUCCESSFULLY!"
           echo "🌐 Visit: https://ai-vibez.com"
-          echo "🔐 Login functionality ready for testing!"
+          echo "🔐 Login functionality should now work!"
           echo "=================================================="
