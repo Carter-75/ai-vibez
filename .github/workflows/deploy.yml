@@ -27,7 +27,7 @@ jobs:
           command: deploy --config wrangler.toml 
           preCommands: |
             echo "Setting up database migrations..."
-            wrangler d1 migrations apply ai-vibez-d1 --remote
+            #wrangler d1 migrations apply ai-vibez-d1 --remote
             
 
           postCommands: |
