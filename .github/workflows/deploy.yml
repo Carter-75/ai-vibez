@@ -40,6 +40,12 @@ jobs:
           echo "Testing wrangler authentication..."
           npx wrangler whoami || echo "Authentication test failed"
           
+          # Check what type of project Cloudflare thinks this is
+          echo "📋 Checking project type detection..."
+          npx wrangler pages project list || echo "No Pages projects or command failed"
+          echo "📋 Checking Workers..."
+          npx wrangler deployments list || echo "No Workers deployments or command failed"
+          
       # Clean up Pages-related files that confuse wrangler
       - name: Clean up Pages detection files
         run: |
@@ -79,41 +85,58 @@ jobs:
             fi
           fi
           
-      # Deploy the Workers application (not Pages!)
+      # Deploy the application (try Workers first, then Pages as fallback)
       - uses: cloudflare/wrangler-action@v3
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           command: deploy --config wrangler.toml
           
-      # Set up Workers secrets (not Pages secrets!)
-      - name: Setup Workers secrets
+      # Set up secrets with hybrid approach (try both Workers and Pages)
+      - name: Setup application secrets (hybrid approach)
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
         run: |
-          echo "Setting up Workers secrets..."
+          echo "🔧 Setting up secrets with hybrid approach..."
+          echo "Will try both Workers and Pages secret commands to ensure compatibility"
           
-          # Set each secret for Workers project (not Pages)
-          echo "🔑 Setting GOOGLE_AI_STUDIO_API_KEY..."
-          echo "${{ secrets.GOOGLE_AI_STUDIO_API_KEY }}" | npx wrangler secret put GOOGLE_AI_STUDIO_API_KEY --name ai-vibez || echo "⚠️ Failed to set GOOGLE_AI_STUDIO_API_KEY"
+          # Function to set secret with both methods
+          set_secret() {
+            local secret_name=$1
+            local secret_value=$2
+            
+            echo "🔑 Setting $secret_name..."
+            
+            # Try Workers method first
+            if echo "$secret_value" | npx wrangler secret put "$secret_name" --name ai-vibez 2>/dev/null; then
+              echo "✅ $secret_name set via Workers method"
+              return 0
+            fi
+            
+            # Try Pages method as fallback
+            if echo "$secret_value" | npx wrangler pages secret put "$secret_name" --project-name ai-vibez 2>/dev/null; then
+              echo "✅ $secret_name set via Pages method"
+              return 0
+            fi
+            
+            # Try Pages method with different project name
+            if echo "$secret_value" | npx wrangler pages secret put "$secret_name" 2>/dev/null; then
+              echo "✅ $secret_name set via Pages method (default project)"
+              return 0
+            fi
+            
+            echo "⚠️  Failed to set $secret_name with any method"
+            return 1
+          }
           
-          echo "🔑 Setting CLOUDFLARE_AI_GATEWAY_TOKEN..."
-          echo "${{ secrets.CLOUDFLARE_AI_GATEWAY_TOKEN }}" | npx wrangler secret put CLOUDFLARE_AI_GATEWAY_TOKEN --name ai-vibez || echo "⚠️ Failed to set CLOUDFLARE_AI_GATEWAY_TOKEN"
+          # Set all secrets using the hybrid function
+          set_secret "GOOGLE_AI_STUDIO_API_KEY" "${{ secrets.GOOGLE_AI_STUDIO_API_KEY }}"
+          set_secret "CLOUDFLARE_AI_GATEWAY_TOKEN" "${{ secrets.CLOUDFLARE_AI_GATEWAY_TOKEN }}"
+          set_secret "JWT_SECRET" "${{ secrets.JWT_SECRET }}"
+          set_secret "WEBHOOK_SECRET" "${{ secrets.WEBHOOK_SECRET }}"
+          set_secret "SECRETS_ENCRYPTION_KEY" "${{ secrets.SECRETS_ENCRYPTION_KEY }}"
+          set_secret "GOOGLE_CLIENT_ID" "${{ secrets.GOOGLE_CLIENT_ID }}"
+          set_secret "GOOGLE_CLIENT_SECRET" "${{ secrets.GOOGLE_CLIENT_SECRET }}"
           
-          echo "🔑 Setting JWT_SECRET..."
-          echo "${{ secrets.JWT_SECRET }}" | npx wrangler secret put JWT_SECRET --name ai-vibez || echo "⚠️ Failed to set JWT_SECRET"
-          
-          echo "🔑 Setting WEBHOOK_SECRET..."
-          echo "${{ secrets.WEBHOOK_SECRET }}" | npx wrangler secret put WEBHOOK_SECRET --name ai-vibez || echo "⚠️ Failed to set WEBHOOK_SECRET"
-          
-          echo "🔑 Setting SECRETS_ENCRYPTION_KEY..."
-          echo "${{ secrets.SECRETS_ENCRYPTION_KEY }}" | npx wrangler secret put SECRETS_ENCRYPTION_KEY --name ai-vibez || echo "⚠️ Failed to set SECRETS_ENCRYPTION_KEY"
-          
-          echo "🔑 Setting GOOGLE_CLIENT_ID..."
-          echo "${{ secrets.GOOGLE_CLIENT_ID }}" | npx wrangler secret put GOOGLE_CLIENT_ID --name ai-vibez || echo "⚠️ Failed to set GOOGLE_CLIENT_ID"
-          
-          echo "🔑 Setting GOOGLE_CLIENT_SECRET..."
-          echo "${{ secrets.GOOGLE_CLIENT_SECRET }}" | npx wrangler secret put GOOGLE_CLIENT_SECRET --name ai-vibez || echo "⚠️ Failed to set GOOGLE_CLIENT_SECRET"
-          
-          echo "✅ Workers secret setup completed"
+          echo "✅ Secret setup completed with hybrid approach"
