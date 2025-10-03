@@ -1,19 +1,284 @@
-name: Get Google Client ID
+name: Deploy AI Vibez to Cloudflare (FULL DEBUG)
 
 on:
   push:
     branches: [ main ]
 
 jobs:
-  get-client-id:
+  deploy:
     runs-on: ubuntu-latest
     steps:
-      - name: Show Google Client ID with hex encoding
-        env:
-          GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
+      - uses: actions/checkout@v4
+      
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          
+      - name: 🔍 Environment Debug
         run: |
-          echo "GOOGLE_CLIENT_ID (hex):"
-          echo "$GOOGLE_CLIENT_ID" | xxd -p | tr -d '\n'
+          echo "🔍 ENVIRONMENT DEBUG:"
+          echo "==================="
+          echo "Node version: $(node --version)"
+          echo "NPM version: $(npm --version)"
+          echo "Git commit: $GITHUB_SHA"
+          echo "Branch: $GITHUB_REF"
+          echo "Workflow: $GITHUB_WORKFLOW"
+          echo "Runner OS: $RUNNER_OS"
+          echo "Working directory: $(pwd)"
+          echo "Home directory: $HOME"
+          echo "User: $(whoami)"
+          echo "Date: $(date)"
+          echo "Disk usage:"
+          df -h
+          echo "Memory usage:"
+          free -h
+          echo "==================="
+          
+      - name: 🔍 Repository Debug
+        run: |
+          echo "🔍 REPOSITORY DEBUG:"
+          echo "==================="
+          echo "Repository structure:"
+          find . -type f -name "*.toml" -o -name "*.json" -o -name "package.json" -o -name "*.md" | head -20
           echo ""
-          echo "GOOGLE_CLIENT_ID (reversed):"
-          echo "$GOOGLE_CLIENT_ID" | rev
+          echo "Package.json exists: $(test -f package.json && echo 'YES' || echo 'NO')"
+          echo "Wrangler.toml exists: $(test -f wrangler.toml && echo 'YES' || echo 'NO')"
+          echo "Node_modules exists: $(test -d node_modules && echo 'YES' || echo 'NO')"
+          echo "Dist directory exists: $(test -d dist && echo 'YES' || echo 'NO')"
+          echo "Git status:"
+          git status --porcelain || echo "Git status failed"
+          echo "==================="
+          
+      - name: 🔍 Secrets Availability Debug
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
+          GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
+          JWT_SECRET: ${{ secrets.JWT_SECRET }}
+          GOOGLE_AI_STUDIO_API_KEY: ${{ secrets.GOOGLE_AI_STUDIO_API_KEY }}
+          CLOUDFLARE_AI_GATEWAY_TOKEN: ${{ secrets.CLOUDFLARE_AI_GATEWAY_TOKEN }}
+          SECRETS_ENCRYPTION_KEY: ${{ secrets.SECRETS_ENCRYPTION_KEY }}
+          WEBHOOK_SECRET: ${{ secrets.WEBHOOK_SECRET }}
+        run: |
+          echo "🔍 SECRETS AVAILABILITY DEBUG:"
+          echo "=============================="
+          echo "CLOUDFLARE_API_TOKEN: $([ -n "$CLOUDFLARE_API_TOKEN" ] && echo 'SET (length: '${#CLOUDFLARE_API_TOKEN}')' || echo 'EMPTY')"
+          echo "CLOUDFLARE_ACCOUNT_ID: $([ -n "$CLOUDFLARE_ACCOUNT_ID" ] && echo 'SET (length: '${#CLOUDFLARE_ACCOUNT_ID}')' || echo 'EMPTY')"
+          echo "GOOGLE_CLIENT_ID: $([ -n "$GOOGLE_CLIENT_ID" ] && echo 'SET (length: '${#GOOGLE_CLIENT_ID}')' || echo 'EMPTY')"
+          echo "GOOGLE_CLIENT_SECRET: $([ -n "$GOOGLE_CLIENT_SECRET" ] && echo 'SET (length: '${#GOOGLE_CLIENT_SECRET}')' || echo 'EMPTY')"
+          echo "JWT_SECRET: $([ -n "$JWT_SECRET" ] && echo 'SET (length: '${#JWT_SECRET}')' || echo 'EMPTY')"
+          echo "GOOGLE_AI_STUDIO_API_KEY: $([ -n "$GOOGLE_AI_STUDIO_API_KEY" ] && echo 'SET (length: '${#GOOGLE_AI_STUDIO_API_KEY}')' || echo 'EMPTY')"
+          echo "CLOUDFLARE_AI_GATEWAY_TOKEN: $([ -n "$CLOUDFLARE_AI_GATEWAY_TOKEN" ] && echo 'SET (length: '${#CLOUDFLARE_AI_GATEWAY_TOKEN}')' || echo 'EMPTY')"
+          echo "SECRETS_ENCRYPTION_KEY: $([ -n "$SECRETS_ENCRYPTION_KEY" ] && echo 'SET (length: '${#SECRETS_ENCRYPTION_KEY}')' || echo 'EMPTY')"
+          echo "WEBHOOK_SECRET: $([ -n "$WEBHOOK_SECRET" ] && echo 'SET (length: '${#WEBHOOK_SECRET}')' || echo 'EMPTY')"
+          echo ""
+          echo "Secret format validation:"
+          echo "CLOUDFLARE_API_TOKEN format: $(echo "$CLOUDFLARE_API_TOKEN" | grep -q '^[A-Za-z0-9_-]\{40\}$' && echo 'VALID' || echo 'INVALID')"
+          echo "GOOGLE_CLIENT_ID format: $(echo "$GOOGLE_CLIENT_ID" | grep -q '\.apps\.googleusercontent\.com$' && echo 'VALID' || echo 'INVALID')"
+          echo "GOOGLE_CLIENT_SECRET format: $(echo "$GOOGLE_CLIENT_SECRET" | grep -q '^GOCSPX-' && echo 'VALID' || echo 'INVALID')"
+          echo "=============================="
+          
+      - name: 📦 NPM Install Debug
+        run: |
+          echo "📦 NPM INSTALL DEBUG:"
+          echo "===================="
+          echo "Before install - node_modules size:"
+          du -sh node_modules 2>/dev/null || echo "node_modules doesn't exist yet"
+          echo ""
+          echo "Starting npm install..."
+          npm install --verbose
+          echo ""
+          echo "After install - node_modules size:"
+          du -sh node_modules
+          echo "Package count:"
+          find node_modules -name package.json | wc -l
+          echo "===================="
+          
+      - name: 🏗️ Build Process Debug
+        env:
+          NODE_OPTIONS: '--max-old-space-size=8192'
+        run: |
+          echo "🏗️ BUILD PROCESS DEBUG:"
+          echo "======================="
+          echo "Node options: $NODE_OPTIONS"
+          echo "Before build - dist directory:"
+          ls -la dist/ 2>/dev/null || echo "dist directory doesn't exist yet"
+          echo ""
+          echo "Starting build process..."
+          npm run build
+          echo ""
+          echo "After build - dist directory:"
+          ls -la dist/
+          echo ""
+          echo "Dist directory size:"
+          du -sh dist/
+          echo ""
+          echo "Key files check:"
+          echo "_worker.js exists: $(test -f dist/_worker.js && echo 'YES ('$(stat -f%z dist/_worker.js 2>/dev/null || stat -c%s dist/_worker.js)' bytes)' || echo 'NO')"
+          echo "index.html exists: $(test -f dist/index.html && echo 'YES' || echo 'NO')"
+          echo "_routes.json exists: $(test -f dist/_routes.json && echo 'YES (will be removed)' || echo 'NO')"
+          echo "======================="
+          
+      - name: 🧹 Cloudflare Detection Debug
+        run: |
+          echo "🧹 CLOUDFLARE DETECTION DEBUG:"
+          echo "=============================="
+          echo "Before cleanup:"
+          echo "_routes.json exists: $(test -f dist/_routes.json && echo 'YES' || echo 'NO')"
+          echo "functions/ exists: $(test -d functions && echo 'YES' || echo 'NO')"
+          echo ""
+          echo "Removing Pages detection files..."
+          rm -f dist/_routes.json
+          rm -rf functions/
+          echo ""
+          echo "After cleanup:"
+          echo "_routes.json exists: $(test -f dist/_routes.json && echo 'YES' || echo 'NO')"
+          echo "functions/ exists: $(test -d functions && echo 'YES' || echo 'NO')"
+          echo "=============================="
+          
+      - name: 🔐 Wrangler Authentication Debug
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          echo "🔐 WRANGLER AUTHENTICATION DEBUG:"
+          echo "================================="
+          echo "Wrangler version:"
+          npx wrangler --version
+          echo ""
+          echo "Testing authentication..."
+          npx wrangler whoami || echo "Authentication failed"
+          echo ""
+          echo "Listing D1 databases:"
+          npx wrangler d1 list || echo "D1 list failed"
+          echo ""
+          echo "Checking Workers:"
+          npx wrangler deployments list --name ai-vibez || echo "Workers list failed"
+          echo "================================="
+          
+      - name: 🗄️ Database Migration Debug
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          echo "🗄️ DATABASE MIGRATION DEBUG:"
+          echo "============================"
+          echo "Migration files:"
+          ls -la migrations/ || echo "No migrations directory"
+          echo ""
+          echo "Migration metadata:"
+          cat migrations/meta/_journal.json 2>/dev/null || echo "No migration journal found"
+          echo ""
+          echo "Attempting database migration..."
+          if npx wrangler d1 migrations apply ai-vibez-d1 --remote; then
+            echo "✅ Migration successful"
+          else
+            echo "⚠️ Migration failed, trying alternative approaches..."
+            npx wrangler d1 migrations apply --database-id=88c494f1-1236-4ce4-8b60-570776559000 --remote || echo "Alternative migration also failed"
+          fi
+          echo "============================"
+          
+      - name: 🚀 Deployment Debug
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: deploy --config wrangler.toml --verbose
+          
+      - name: 🔑 Secrets Management Debug
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          echo "🔑 SECRETS MANAGEMENT DEBUG:"
+          echo "============================"
+          echo "Checking current Worker secrets..."
+          npx wrangler secret list --name ai-vibez || echo "Failed to list secrets"
+          echo ""
+          echo "Attempting to set secrets (will try both Workers and Pages methods)..."
+          
+          # Function to try multiple secret setting methods
+          set_secret_debug() {
+            local secret_name=$1
+            local secret_value=$2
+            
+            echo "Setting $secret_name..."
+            
+            # Method 1: Workers secret
+            if echo "$secret_value" | npx wrangler secret put "$secret_name" --name ai-vibez 2>&1; then
+              echo "✅ $secret_name set via Workers method"
+              return 0
+            fi
+            
+            # Method 2: Pages secret with project name
+            if echo "$secret_value" | npx wrangler pages secret put "$secret_name" --project-name ai-vibez 2>&1; then
+              echo "✅ $secret_name set via Pages method (with project)"
+              return 0
+            fi
+            
+            # Method 3: Pages secret without project name
+            if echo "$secret_value" | npx wrangler pages secret put "$secret_name" 2>&1; then
+              echo "✅ $secret_name set via Pages method (default)"
+              return 0
+            fi
+            
+            echo "❌ Failed to set $secret_name with any method"
+            return 1
+          }
+          
+          # Only set non-empty secrets from GitHub
+          [ -n "${{ secrets.GOOGLE_CLIENT_ID }}" ] && set_secret_debug "GOOGLE_CLIENT_ID" "${{ secrets.GOOGLE_CLIENT_ID }}"
+          [ -n "${{ secrets.GOOGLE_CLIENT_SECRET }}" ] && set_secret_debug "GOOGLE_CLIENT_SECRET" "${{ secrets.GOOGLE_CLIENT_SECRET }}"
+          [ -n "${{ secrets.JWT_SECRET }}" ] && set_secret_debug "JWT_SECRET" "${{ secrets.JWT_SECRET }}"
+          [ -n "${{ secrets.GOOGLE_AI_STUDIO_API_KEY }}" ] && set_secret_debug "GOOGLE_AI_STUDIO_API_KEY" "${{ secrets.GOOGLE_AI_STUDIO_API_KEY }}"
+          [ -n "${{ secrets.CLOUDFLARE_AI_GATEWAY_TOKEN }}" ] && set_secret_debug "CLOUDFLARE_AI_GATEWAY_TOKEN" "${{ secrets.CLOUDFLARE_AI_GATEWAY_TOKEN }}"
+          [ -n "${{ secrets.SECRETS_ENCRYPTION_KEY }}" ] && set_secret_debug "SECRETS_ENCRYPTION_KEY" "${{ secrets.SECRETS_ENCRYPTION_KEY }}"
+          [ -n "${{ secrets.WEBHOOK_SECRET }}" ] && set_secret_debug "WEBHOOK_SECRET" "${{ secrets.WEBHOOK_SECRET }}"
+          
+          echo ""
+          echo "Final secret list check:"
+          npx wrangler secret list --name ai-vibez || echo "Failed to list final secrets"
+          echo "============================"
+          
+      - name: 🌐 Deployment Verification Debug
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          echo "🌐 DEPLOYMENT VERIFICATION DEBUG:"
+          echo "================================="
+          echo "Checking deployment status..."
+          npx wrangler deployments list --name ai-vibez || echo "Failed to get deployments"
+          echo ""
+          echo "Testing deployment URLs..."
+          echo "Primary domain: https://ai-vibez.com"
+          curl -I https://ai-vibez.com || echo "Primary domain not accessible"
+          echo ""
+          echo "WWW domain: https://www.ai-vibez.com"  
+          curl -I https://www.ai-vibez.com || echo "WWW domain not accessible"
+          echo ""
+          echo "Worker subdomain:"
+          npx wrangler deployments list --name ai-vibez | grep -o 'https://.*workers\.dev' | head -1 || echo "No worker subdomain found"
+          echo "================================="
+          
+      - name: 📊 Final Status Summary
+        if: always()
+        run: |
+          echo "📊 FINAL DEPLOYMENT STATUS SUMMARY:"
+          echo "==================================="
+          echo "Deployment completed at: $(date)"
+          echo "Exit codes from previous steps:"
+          echo "- NPM Install: $?"
+          echo "- Build Process: Checked above"
+          echo "- Authentication: Checked above"  
+          echo "- Migration: Checked above"
+          echo "- Deployment: Checked above"
+          echo "- Secrets: Checked above"
+          echo ""
+          echo "🎯 Next steps:"
+          echo "1. Visit https://ai-vibez.com"
+          echo "2. Test OAuth login functionality"
+          echo "3. Create your first AI app"
+          echo "4. Monitor Cloudflare Dashboard for any issues"
+          echo "==================================="
