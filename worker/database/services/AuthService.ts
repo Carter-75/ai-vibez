@@ -692,6 +692,8 @@ export class AuthService extends BaseService {
      */
     async getUserForAuth(userId: string): Promise<AuthUser | null> {
         try {
+            logger.info('🔍 DEBUG: Attempting to get user for auth', { userId });
+            
             const user = await this.database
                 .select({
                     id: schema.users.id,
@@ -715,12 +717,14 @@ export class AuthService extends BaseService {
                 .get();
             
             if (!user) {
+                logger.warn('🚨 DEBUG: User not found in database', { userId });
                 return null;
             }
             
+            logger.info('✅ DEBUG: User found successfully', { userId, email: user.email });
             return mapUserResponse(user);
         } catch (error) {
-            logger.error('Error getting user for auth', error);
+            logger.error('❌ DEBUG: Database error getting user for auth', { userId, error: error.message, stack: error.stack });
             return null;
         }
     }
@@ -730,31 +734,37 @@ export class AuthService extends BaseService {
      */
     async validateTokenAndGetUser(token: string, env: Env): Promise<AuthUserSession | null> {
         try {
+            logger.info('🔍 DEBUG: Starting token validation');
             const jwtUtils = JWTUtils.getInstance(env);
             const payload = await jwtUtils.verifyToken(token);
             
             if (!payload || payload.type !== 'access') {
+                logger.warn('🚨 DEBUG: Invalid token payload', { hasPayload: !!payload, type: payload?.type });
                 return null;
             }
             
             // Check if token is expired
             if (payload.exp * 1000 < Date.now()) {
-                logger.debug('Token expired', { exp: payload.exp });
+                logger.warn('🚨 DEBUG: Token expired', { exp: payload.exp, now: Date.now() });
                 return null;
             }
+            
+            logger.info('✅ DEBUG: Token valid, getting user', { userId: payload.sub, sessionId: payload.sessionId });
             
             // Get user from database
             const user = await this.getUserForAuth(payload.sub);
             if (!user) {
+                logger.error('❌ DEBUG: Failed to get user from database after token validation', { userId: payload.sub });
                 return null;
             }
             
+            logger.info('🎉 DEBUG: Token validation and user lookup successful', { userId: payload.sub });
             return {
                 user,
                 sessionId: payload.sessionId,
             };
         } catch (error) {
-            logger.error('Token validation error', error);
+            logger.error('❌ DEBUG: Token validation error', { error: error.message, stack: error.stack });
             return null;
         }
     }
