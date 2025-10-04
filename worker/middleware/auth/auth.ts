@@ -34,21 +34,28 @@ export async function authMiddleware(
     env: Env
 ): Promise<AuthUserSession | null> {
     try {
+        logger.info('🔍 DEBUG: Auth middleware starting');
+        
         // Extract token
         const token = extractToken(request);
         
         if (token) {
+            logger.info('✅ DEBUG: Token found, validating', { tokenLength: token.length });
             const userResponse = await validateToken(token, env);
             if (userResponse) {
-                logger.debug('User authenticated', { userId: userResponse.user.id });
+                logger.info('🎉 DEBUG: User authenticated successfully', { userId: userResponse.user.id, email: userResponse.user.email });
                 return userResponse;
+            } else {
+                logger.warn('🚨 DEBUG: Token validation failed');
             }
+        } else {
+            logger.info('🚨 DEBUG: No token found in request');
         }
         
-        logger.debug('No authentication found');
+        logger.info('❌ DEBUG: Authentication failed - no valid session');
         return null;
     } catch (error) {
-        logger.error('Auth middleware error', error);
+        logger.error('❌ DEBUG: Auth middleware error', { error: error.message, stack: error.stack });
         return null;
     }
 }
