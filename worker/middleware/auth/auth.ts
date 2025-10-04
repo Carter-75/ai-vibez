@@ -1,4 +1,4 @@
-/**
+/** 
  * Authentication Middleware
  * Handles JWT validation and session management
  */
